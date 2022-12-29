@@ -1,0 +1,15 @@
+Bootstrap: docker
+From: centos:7
+
+%post
+    yum install -y epel-release
+    yum -y update
+    yum install -y R
+
+    # Install required R packages
+    R -e "install.packages(c(\"tidyverse\", \"ciftiTools\"))"
+
+    # TO DO: Workbench
+
+%help
+    python ili_manger.py --help
