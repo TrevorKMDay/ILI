@@ -1,0 +1,3 @@
+[submodule "Cifti_conn_matrix_to_corr_dt_pt"]
+	path = Cifti_conn_matrix_to_corr_dt_pt
+	url = https://gitlab.com/Fair_lab/Cifti_conn_matrix_to_corr_dt_pt.git
