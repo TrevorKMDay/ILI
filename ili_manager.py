@@ -236,9 +236,10 @@ elif args.flow == "analysis":
         # Config needs to be supplied for session flow
         sys.exit("ERROR: Config file needs to be supplied")
 
-    for r in ROIs:
+    for nrh, ix, files in ROIs:
 
-        print(r[2][0])
+        # TO DO: Don't hardcode this width
+        nrh_zpad=str(nrh).zfill(3)
 
         # Params
         #   1: MRE; 2/3: L/R ROI; 
@@ -247,8 +248,9 @@ elif args.flow == "analysis":
         #   12: Z-transformation?
         # Note: sp.run seems to require all args to be strings
         sp.run(["bin/analysis-run_seedmap.sh", 
+                nrh_zpad,
                 args.mre_dir,
-                r[2][0], r[2][1], 
+                files[0], files[1], 
                 session_files, l_midthick_file, r_midthick_file, motion_file,  
                 str(config['fd_threshold']),
                 str(config['smoothing_kernel']), 
@@ -256,5 +258,16 @@ elif args.flow == "analysis":
                 str(config['max_minutes']),
                 str(config['z_transform_yn'])
                 ])
+
+        cluster = sp.run(["bin/analysis-cluster.sh", 
+                          f"seedmap_dir_{nrh_zpad}",
+                          str(config["cluster_value_min"]),
+                          str(config["cluster_surf_area_min"])],
+                          capture_output=True)
+
+        print(str(cluster.stdout))
+
+        result = re.match(r"RESULT:", str(cluster.stdout))
+        print(result)
 
         break

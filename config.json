@@ -1,7 +1,9 @@
 {
-    "fd_threshold":         0.2,
-    "smoothing_kernel":     0,
-    "max_minutes":          10,
-    "remove_outliers_yn":   1,
-    "z_transform_yn":       1
+    "fd_threshold":             0.2,
+    "smoothing_kernel":         0,
+    "max_minutes":              10,
+    "remove_outliers_yn":       1,
+    "z_transform_yn":           1,
+    "cluster_surf_area_min":    10,
+    "cluster_value_min":        0.4
 }

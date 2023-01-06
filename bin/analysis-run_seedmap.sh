@@ -2,18 +2,19 @@
 
 # Assign variables
 
-mre=${1}
-L_ROI=${2}
-R_ROI=${3}
-input_dtseries=${4}
-input_Lmidthickness=${5}
-input_Rmidthickness=${6}
-input_motion_mat=${7}
-FD=${8}
-SK=${9}
-rm_OUTLIER=${10}
-minutes=${11}
-z_transform=${12}
+nrh=${1}
+mre=${2}
+L_ROI=${3}
+R_ROI=${4}
+input_dtseries=${5}
+input_Lmidthickness=${6}
+input_Rmidthickness=${7}
+input_motion_mat=${8}
+FD=${9}
+SK=${10}
+rm_OUTLIER=${11}
+minutes=${12}
+z_transform=${13}
 
 # Exported with wrapper
 seed_map_wrapper=Cifti_conn_matrix_to_corr_dt_pt/seed_map_wrapper.py
@@ -26,7 +27,7 @@ export MCR_CACHE_ROOT
 
 # Run seedmap
 
-tempdir=seedmap_dir
+tempdir=seedmap_dir_${nrh}
 # Create output directory and exit if unsuccessful
 mkdir -p "${tempdir}" || (echo "Unable to create tempdir ${tempdir}" && exit 1)
 
