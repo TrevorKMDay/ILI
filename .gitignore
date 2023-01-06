@@ -1,0 +1,5 @@
+# CIFTI files for testing
+*.nii
+
+# Output ROI folder for resting
+roi_output/
