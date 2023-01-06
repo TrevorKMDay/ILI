@@ -1,7 +1,7 @@
 {
     "fd_threshold":         0.2,
     "smoothing_kernel":     0,
-    "min_minutes":          10,
+    "max_minutes":          10,
     "remove_outliers_yn":   1,
-    "z_xfrm_yn":            1
+    "z_transform_yn":       1
 }

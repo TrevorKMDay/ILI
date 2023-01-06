@@ -49,8 +49,8 @@ parser.add_argument("-n", "--n_repeats", dest="n",
 ## ANALYSIS OPTIONS ====
 
 # Session input
-parser.add_argument("-s", "--session", dest="session_file",
-                    help="dtseries file to analyze",
+parser.add_argument("-s", "--session", dest="session_files", nargs=4,
+                    help="Files to analyze: dtseries, L/R midthickness, motion",
                     metavar="FILE")
 
 parser.add_argument("-r", "--roi_dir", dest="roi_dir",
@@ -60,6 +60,10 @@ parser.add_argument("-r", "--roi_dir", dest="roi_dir",
 parser.add_argument("-j", "--json_config", dest="config_file",
                     help="JSON file containing configuration for seedmapper",
                     metavar="FILE")
+
+parser.add_argument("-m", "--MRE", dest="mre_dir",
+                    help="MATLAB runtime directory; R2019a recommended",
+                    metavar="DIR")
 
 
 args = parser.parse_args()
@@ -141,17 +145,44 @@ elif args.flow == "analysis":
     else:
         print(f"matlab path is:\n\t{matlab}")
 
-    if args.session_file is not None:
-        if ".dtseries.nii" in args.session_file:
+    # Check input files
+    if args.session_files is not None:
+
+        if ".dtseries.nii" in args.session_files[0]:
             # Simplify legibility of code
-            session_file = args.session_file
-            print(f"dtseries is:\n\t{session_file}")
+            session_files = args.session_files[0]
+            print(f"dtseries is:\n\t{session_files}")
         else:
-            print("ERROR: Input ROI should be a .dtseries.nii file")
+            print("ERROR: Input session file 1 should be a .dtseries.nii file")
             exit(1)
+
+        if ".surf.gii" in args.session_files[1]:
+            # Simplify legibility of code
+            l_midthick_file = args.session_files[1]
+            print(f"L midthick is:\n\t{l_midthick_file}")
+        else:
+            print("ERROR: Input session file 2 should be a .surf.gii file")
+            exit(1)
+
+        if ".surf.gii" in args.session_files[2]:
+            # Simplify legibility of code
+            r_midthick_file = args.session_files[2]
+            print(f"R midthick is:\n\t{r_midthick_file}")
+        else:
+            print("ERROR: Input session file 3 should be a .surf.gii file")
+            exit(1)
+
+        if ".mat" in args.session_files[3]:
+            # Simplify legibility of code
+            motion_file = args.session_files[3]
+            print(f"Motion file is:\n\t{motion_file}")
+        else:
+            print("ERROR: Input session file 4 should be a .mat file")
+            exit(1)
+
     else:
         # Session needs to be supplied for session flow
-        print("ERROR: Input session dtseries required")
+        print("ERROR: Input dtseries, midthickness files required")
         exit(1)
 
     # Load in ROIs
@@ -190,7 +221,7 @@ elif args.flow == "analysis":
         # Store numeric values, file destination
         ROIs = zip(sizes_to_use, indices_to_use, files_to_use)
 
-        print(list(ROIs))
+        # print(list(ROIs))
 
     else:
         # ROIs need to be supplied for session flow
@@ -204,3 +235,26 @@ elif args.flow == "analysis":
     else:
         # Config needs to be supplied for session flow
         sys.exit("ERROR: Config file needs to be supplied")
+
+    for r in ROIs:
+
+        print(r[2][0])
+
+        # Params
+        #   1: MRE; 2/3: L/R ROI; 
+        #   4-7: session dtseries, l/r midthickness, motion
+        #   8: FD; 9: smoothing kernel; 10: rm outliers?; 11: minutes; 
+        #   12: Z-transformation?
+        # Note: sp.run seems to require all args to be strings
+        sp.run(["bin/analysis-run_seedmap.sh", 
+                args.mre_dir,
+                r[2][0], r[2][1], 
+                session_files, l_midthick_file, r_midthick_file, motion_file,  
+                str(config['fd_threshold']),
+                str(config['smoothing_kernel']), 
+                str(config['remove_outliers_yn']),
+                str(config['max_minutes']),
+                str(config['z_transform_yn'])
+                ])
+
+        break
