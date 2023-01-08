@@ -70,34 +70,24 @@ parser.add_argument("-m", "--MRE", dest="mre_dir",
 
 args = parser.parse_args()
 
-# RUN 
+# Declare functions
 
-## Check for wb command existence
-wb_command = shutil.which("wb_command")
-
-if wb_command is None:
-    print("ERROR: wb_command not found with `which`")
-    exit(1)
-else:
-    print(f"wb_command path is:\n\t{wb_command}")
-
-if args.flow == "roi":
+def create_rois(roi_input, n):
 
     print("\n=== Running ROI flow ... ===")
 
     # Check input
-    if args.roi_input is not None:
-        if ".dscalar.nii" in args.roi_input:
-            # Simplify legibility of code
-            sp.run(["cp", args.roi_input, "original_roi.dscalar.nii"])
+    if roi_input is not None:
+        if ".dscalar.nii" in roi_input:
+            # Copy input file to standard name
+            sp.run(["cp", roi_input, "original_roi.dscalar.nii"])
             roi_input = "original_roi.dscalar.nii"
         else:
-            print("ERROR: Input ROI should be a .dscalar.nii file")
-            exit(1)
+            sys.exit(f"ERROR: Input ROI {roi_input} should be a .dscalar.nii "
+                      "file")
     else:
         # ROI needs to be supplied for ROI-making flow
-        print("ERROR: Input ROI required")
-        exit(1)
+        sys.exit("ERROR: Input ROI required")
 
     ## 1. Create mirror file
     print("\n== Creating mirrored ROI ==")
@@ -109,8 +99,7 @@ if args.flow == "roi":
     output_dir="roi_outputs"
     os.makedirs(output_dir, exist_ok=True)
     sp.run(["Rscript", "bin/rois_permute_ROI.R", 
-            wb_command, roi_input, roi_mirrored, str(args.n),
-            output_dir, "test"])
+            wb_command, roi_input, roi_mirrored, str(n), output_dir, "test"])
 
     ## 3. Convert all dscalars -> dlabel.nii -> label.gii
     print("\n== Converting to label files ==")
@@ -121,10 +110,12 @@ if args.flow == "roi":
     n_dlabel = len(glob.glob(f"{output_dir}/*.dlabel.nii"))
     n_labelg = len(glob.glob(f"{output_dir}/*.label.gii"))
 
+    # Check to make sure theres one dlabel per dscalar
     if not n_dscalar == n_dlabel:
         sys.exit(f"Error: Number of dscalars ({n_dscalar}) and dlabels "
                  f"({n_dlabel}) does not match!. Exiting.")
 
+    # Check to make sure there's two .label.gii files per dlabel
     if not 2 * n_dlabel == n_labelg:
         sys.exit(f"Error: Number of 2 * dlabels ({n_dlabel}) and label files "
                  f"({n_labelg}) does not match! Exiting.")
@@ -134,7 +125,7 @@ if args.flow == "roi":
     [os.remove(i) for i in glob.glob(f"{output_dir}/*.dscalar.nii")]
     [os.remove(i) for i in glob.glob(f"{output_dir}/*.dlabel.nii")]
 
-elif args.flow == "analysis":
+def analyze_session(session_files, roi_dir, n, config_file, mre_dir):
 
     print("\n=== Running analysis flow ... ===")
 
@@ -142,72 +133,65 @@ elif args.flow == "analysis":
     matlab = shutil.which("matlab")
 
     if matlab is None:
-        print("ERROR: matlab not found with `which`")
-        exit(1)
+        sys.exit("ERROR: matlab not found with `which`")
     else:
         print(f"matlab path is:\n\t{matlab}")
 
     # Check input files
-    if args.session_files is not None:
+    if session_files is not None:
 
-        if ".dtseries.nii" in args.session_files[0]:
+        if ".dtseries.nii" in session_files[0]:
             # Simplify legibility of code
-            session_files = args.session_files[0]
+            dtseries = session_files[0]
             print(f"dtseries is:\n\t{session_files}")
         else:
-            print("ERROR: Input session file 1 should be a .dtseries.nii file")
-            exit(1)
+            sys.exit("ERROR: Input session file 1 should be a .dtseries.nii "
+                     "file")
 
-        if ".surf.gii" in args.session_files[1]:
+        if ".surf.gii" in session_files[1]:
             # Simplify legibility of code
-            l_midthick_file = args.session_files[1]
+            l_midthick_file = session_files[1]
             print(f"L midthick is:\n\t{l_midthick_file}")
         else:
-            print("ERROR: Input session file 2 should be a .surf.gii file")
-            exit(1)
+            sys.exit("ERROR: Input session file 2 should be a .surf.gii file")
 
-        if ".surf.gii" in args.session_files[2]:
+        if ".surf.gii" in session_files[2]:
             # Simplify legibility of code
-            r_midthick_file = args.session_files[2]
+            r_midthick_file = session_files[2]
             print(f"R midthick is:\n\t{r_midthick_file}")
         else:
-            print("ERROR: Input session file 3 should be a .surf.gii file")
-            exit(1)
+            sys.exit("ERROR: Input session file 3 should be a .surf.gii file")
 
-        if ".mat" in args.session_files[3]:
+        if ".mat" in session_files[3]:
             # Simplify legibility of code
-            motion_file = args.session_files[3]
+            motion_file = session_files[3]
             print(f"Motion file is:\n\t{motion_file}")
         else:
-            print("ERROR: Input session file 4 should be a .mat file")
-            exit(1)
+            sys.exit("ERROR: Input session file 4 should be a .mat file")
 
     else:
         # Session needs to be supplied for session flow
-        print("ERROR: Input dtseries, midthickness files required")
-        exit(1)
+        sys.exit("ERROR: Input session files required")
 
     # Load in ROIs
-    if args.roi_dir is not None:
+    if roi_dir is not None:
         
-        rois = [f for f in os.listdir(args.roi_dir) if 
-                os.path.isfile(os.path.join(args.roi_dir, f))]
+        rois = [f for f in os.listdir(roi_dir) if 
+                os.path.isfile(os.path.join(roi_dir, f))]
 
-        # Exctract # of unique nrh values
+        # Extract # of unique nrh values
         size = len(set([re.findall(r"nrh-[0-9]+", f)[0] for f in rois]))
 
         indices = len(set([re.findall(r"ix-[0-9]+", f)[0] for f in rois]))
 
         print(f"Found {size} ROIs with {indices} copies each.")
 
-
         # Select n ratios from those available
-        sizes_to_use = random.sample(list(range(1, size)), args.n)
+        sizes_to_use = random.sample(list(range(1, size)), n)
         sizes_to_use.sort()
 
         # For each size selected, choose an index to use for that ROI
-        indices_to_use = [int(random.uniform(1, indices)) for i in 
-                          sizes_to_use]
+        indices_to_use = [int(random.uniform(1, indices)) for i in sizes_to_use]
                           
         # TO DO: zfill assumes sizes of exactly 3 for size and 2 for index
         sizes_to_use_str = [str(i).zfill(3) for i in sizes_to_use]
@@ -217,22 +201,24 @@ elif args.flow == "analysis":
         ROIs_to_use_str= zip(sizes_to_use_str, indices_to_use_str)
         # Structure (nrh, ix, [L, R])
         # Find these files in the original directory
-        files_to_use = [glob.glob(f"{args.roi_dir}/*_nrh-{nrh}_ix-{ix}_?.label.gii") 
+        files_to_use = [glob.glob(f"{roi_dir}/*_nrh-{nrh}_ix-{ix}_?.label.gii") 
                         for nrh, ix in ROIs_to_use_str]
 
         # Store numeric values, file destination
-        ROIs = zip(range(0, args.n - 1), sizes_to_use, indices_to_use, 
+        ROIs = zip(range(0, n), sizes_to_use, indices_to_use, 
                    files_to_use)
 
-        # print(list(ROIs))
+        # print([n, len(sizes_to_use), len(indices_to_use), len(files_to_use),
+        #        len(list(ROIs))])
+        # exit()
 
     else:
         # ROIs need to be supplied for session flow
         sys.exit("ERROR: Directory of ROIs required")
 
-    if args.config_file is not None:
+    if config_file is not None:
 
-        config = json.load(open(args.config_file))
+        config = json.load(open(config_file))
         print(config)
 
     else:
@@ -240,7 +226,7 @@ elif args.flow == "analysis":
         sys.exit("ERROR: Config file needs to be supplied")
 
     # Create empty array with size n(x)4: NRH, IX, L, R
-    results = np.zeros((args.n, 4), dtype=np.int64)
+    results = np.zeros((n, 4), dtype=np.int64)
 
     for n, nrh, ix, files in ROIs:
 
@@ -255,9 +241,9 @@ elif args.flow == "analysis":
         # Note: sp.run seems to require all args to be strings
         sp.run(["bin/analysis-run_seedmap.sh", 
                 nrh_zpad,
-                args.mre_dir,
+                mre_dir,
                 files[0], files[1], 
-                session_files, l_midthick_file, r_midthick_file, motion_file,  
+                dtseries, l_midthick_file, r_midthick_file, motion_file,  
                 str(config['fd_threshold']),
                 str(config['smoothing_kernel']), 
                 str(config['remove_outliers_yn']),
@@ -279,7 +265,7 @@ elif args.flow == "analysis":
         result2 = result1.replace("RESULT: ", "")
         result3 = re.sub(r'[\[\]]', '', result2).split(' ')
 
-        # Add reults to array
+        # Add results to array
         results[n, 0] = nrh
         results[n, 1] = ix
         results[n, 2] = int(result3[0])
@@ -287,5 +273,26 @@ elif args.flow == "analysis":
 
         # break
 
-np.savetxt("results.csv", results, delimiter=",", fmt="%s",
-           header="nrh,ix,L,R")
+    return(results)
+
+# RUN 
+
+## Check for wb command existence
+wb_command = shutil.which("wb_command")
+
+if wb_command is None:
+    sys.exit("ERROR: wb_command not found with `which`")
+else:
+    print(f"wb_command path is:\n\t{wb_command}")
+
+if args.flow == "roi":
+
+    create_rois(args.input_roi)
+
+elif args.flow == "analysis":
+
+    results = analyze_session(args.session_files, args.roi_dir, args.n,
+                              args.config_file, args.mre_dir)
+
+    np.savetxt("results.csv", results, delimiter=",", fmt="%s",
+               header="nrh,ix,L,R")
