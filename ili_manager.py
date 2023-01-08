@@ -9,6 +9,8 @@ import sys
 import os
 import json
 
+import numpy as np
+
 # Newlines in help
 from argparse import RawTextHelpFormatter
 
@@ -219,7 +221,8 @@ elif args.flow == "analysis":
                         for nrh, ix in ROIs_to_use_str]
 
         # Store numeric values, file destination
-        ROIs = zip(sizes_to_use, indices_to_use, files_to_use)
+        ROIs = zip(range(0, args.n - 1), sizes_to_use, indices_to_use, 
+                   files_to_use)
 
         # print(list(ROIs))
 
@@ -236,7 +239,10 @@ elif args.flow == "analysis":
         # Config needs to be supplied for session flow
         sys.exit("ERROR: Config file needs to be supplied")
 
-    for nrh, ix, files in ROIs:
+    # Create empty array with size n(x)4: NRH, IX, L, R
+    results = np.zeros((args.n, 4), dtype=np.int64)
+
+    for n, nrh, ix, files in ROIs:
 
         # TO DO: Don't hardcode this width
         nrh_zpad=str(nrh).zfill(3)
@@ -265,9 +271,21 @@ elif args.flow == "analysis":
                           str(config["cluster_surf_area_min"])],
                           capture_output=True)
 
-        print(str(cluster.stdout))
+        # Log cluster info
+        print(cluster.stdout.decode('ascii'))
 
-        result = re.match(r"RESULT:", str(cluster.stdout))
-        print(result)
+        result1 = re.findall(r'RESULT: \[\d+ \d+\]', 
+                            cluster.stdout.decode('ascii'))[0]
+        result2 = result1.replace("RESULT: ", "")
+        result3 = re.sub(r'[\[\]]', '', result2).split(' ')
 
-        break
+        # Add reults to array
+        results[n, 0] = nrh
+        results[n, 1] = ix
+        results[n, 2] = int(result3[0])
+        results[n, 3] = int(result3[1])
+
+        # break
+
+np.savetxt("results.csv", results, delimiter=",", fmt="%s",
+           header="nrh,ix,L,R")
