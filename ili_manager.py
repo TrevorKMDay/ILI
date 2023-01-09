@@ -17,7 +17,7 @@ from argparse import RawTextHelpFormatter
 # import sys; print(sys.version)
 # exit()
 
-# PARSE OPTIONS
+# PARSE OPTIONS =====
 
 parser = argparse.ArgumentParser(
                     prog='ProgramName',
@@ -25,52 +25,63 @@ parser = argparse.ArgumentParser(
                     epilog='Text at the bottom of help',
                     formatter_class=RawTextHelpFormatter)
 
-parser.add_argument("-F", "--flow", dest="flow",
-                    nargs="?", choices=("roi", "analysis"),
-                    required=True,
-                    help="Use ROI creation  ('roi') or analysis flow "
-                         "('analysis')",
-                    metavar="FLOW")
+subparsers = parser.add_subparsers(dest="command")
 
-## ROI CREATION OPTIONS ====
+ps_roi = subparsers.add_parser("roi", help="Create ROIs.")
+ps_analysis = subparsers.add_parser("analysis", help="Analyze session.")
+
+# ROI CREATION OPTIONS ====
 
 # Input ROI
-parser.add_argument("-i", "--roi_input", dest="roi_input",
+ps_roi.add_argument("-i", "--roi_input", dest="roi_input",
                     help="CIFTI file containing ROI to create.",
                     metavar="FILE")
 
 # How many variations at each L/R greyordinate ratio to create
-parser.add_argument("-n", "--n_repeats", dest="n", 
-                    type=int, 
-                    help="1. When ROI flow: How many alternative versions at "
-                         "each mixing ratio L/R to create.\n"
-                         "2. When analysis flow: How many mixing values to "
-                         "use.",
+ps_roi.add_argument("-n", "--n_repeats", dest="n",
+                    type=int, default=10,
+                    help="How many alternative versions at each mixing "
+                         "ratio L/R to create.",
                     metavar="N")
 
-## ANALYSIS OPTIONS ====
+# ANALYSIS OPTIONS ====
 
 # Session input
-parser.add_argument("-s", "--session", dest="session_files", nargs=4,
-                    help="Files to analyze: dtseries, L/R midthickness, motion",
-                    metavar="FILE")
+ps_analysis.add_argument("-s", "--session", dest="session_files", nargs=4,
+                         help="Files to analyze: dtseries, L/R midthickness, "
+                              "motion",
+                         metavar="FILE")
 
-parser.add_argument("-r", "--roi_dir", dest="roi_dir",
-                    help="Directory containing label files to use",
-                    metavar="DIR")
+ps_analysis.add_argument("-r", "--roi_dir", dest="roi_dir",
+                         help="Directory containing label files to use",
+                         metavar="DIR")
 
-parser.add_argument("-j", "--json_config", dest="config_file",
-                    help="JSON file containing configuration for seedmapper",
-                    metavar="FILE")
+ps_analysis.add_argument("-j", "--json_config", dest="config_file",
+                         help="JSON file containing configuration for "
+                              "seedmapper",
+                         metavar="FILE")
 
-parser.add_argument("-m", "--MRE", dest="mre_dir",
-                    help="MATLAB runtime directory; R2019a recommended",
-                    metavar="DIR")
+ps_analysis.add_argument("-n", "--n_samples", dest="n",
+                         type=int, default=100,
+                         help="How many mixing values to use.",
+                         metavar="N")
 
+ps_analysis.add_argument("-m", "--MRE", dest="mre_dir",
+                         help="MATLAB runtime directory; R2019a recommended",
+                         metavar="DIR")
 
 args = parser.parse_args()
 
+# If no subcommand given, give help.
+if not args.command:
+    parser.parse_args(["--help"])
+    sys.exit(0)
+
+# print(args)
+# sys.exit()
+
 # Declare functions
+
 
 def create_rois(roi_input, n):
 
@@ -84,28 +95,28 @@ def create_rois(roi_input, n):
             roi_input = "original_roi.dscalar.nii"
         else:
             sys.exit(f"ERROR: Input ROI {roi_input} should be a .dscalar.nii "
-                      "file")
+                     "file")
     else:
         # ROI needs to be supplied for ROI-making flow
         sys.exit("ERROR: Input ROI required")
 
-    ## 1. Create mirror file
+    # 1. Create mirror file
     print("\n== Creating mirrored ROI ==")
-    roi_mirrored="flipped_roi.dscalar.nii"
+    roi_mirrored = "flipped_roi.dscalar.nii"
     sp.run(["bin/rois_create_mirror.sh", wb_command, roi_input, roi_mirrored])
 
-    ## 2. Create permutations
+    # 2. Create permutations
     print("\n== Creating permutations ==")
-    output_dir="roi_outputs"
+    output_dir = "roi_outputs"
     os.makedirs(output_dir, exist_ok=True)
-    sp.run(["Rscript", "bin/rois_permute_ROI.R", 
+    sp.run(["Rscript", "bin/rois_permute_ROI.R",
             wb_command, roi_input, roi_mirrored, str(n), output_dir, "test"])
 
-    ## 3. Convert all dscalars -> dlabel.nii -> label.gii
+    # 3. Convert all dscalars -> dlabel.nii -> label.gii
     print("\n== Converting to label files ==")
     sp.run(["bin/rois_dscalar_to_surface.sh", output_dir])
 
-    ## 4. Clean up
+    # 4. Clean up
     n_dscalar = len(glob.glob(f"{output_dir}/*.dscalar.nii"))
     n_dlabel = len(glob.glob(f"{output_dir}/*.dlabel.nii"))
     n_labelg = len(glob.glob(f"{output_dir}/*.label.gii"))
@@ -125,13 +136,13 @@ def create_rois(roi_input, n):
     [os.remove(i) for i in glob.glob(f"{output_dir}/*.dscalar.nii")]
     [os.remove(i) for i in glob.glob(f"{output_dir}/*.dlabel.nii")]
 
+
 def analyze_session(session_files, roi_dir, n, config_file, mre_dir):
 
     print("\n=== Running analysis flow ... ===")
 
-    ## Check for MATLAB existence
+    # Check for MATLAB existence
     matlab = shutil.which("matlab")
-
     if matlab is None:
         sys.exit("ERROR: matlab not found with `which`")
     else:
@@ -175,8 +186,8 @@ def analyze_session(session_files, roi_dir, n, config_file, mre_dir):
 
     # Load in ROIs
     if roi_dir is not None:
-        
-        rois = [f for f in os.listdir(roi_dir) if 
+
+        rois = [f for f in os.listdir(roi_dir) if
                 os.path.isfile(os.path.join(roi_dir, f))]
 
         # Extract # of unique nrh values
@@ -191,21 +202,22 @@ def analyze_session(session_files, roi_dir, n, config_file, mre_dir):
         sizes_to_use.sort()
 
         # For each size selected, choose an index to use for that ROI
-        indices_to_use = [int(random.uniform(1, indices)) for i in sizes_to_use]
-                          
+        indices_to_use = [int(random.uniform(1, indices)) for i in
+                          sizes_to_use]
+
         # TO DO: zfill assumes sizes of exactly 3 for size and 2 for index
         sizes_to_use_str = [str(i).zfill(3) for i in sizes_to_use]
         indices_to_use_str = [str(i).zfill(2) for i in indices_to_use]
 
         # Zip ratios, indices
-        ROIs_to_use_str= zip(sizes_to_use_str, indices_to_use_str)
+        ROIs_to_use_str = zip(sizes_to_use_str, indices_to_use_str)
         # Structure (nrh, ix, [L, R])
         # Find these files in the original directory
-        files_to_use = [glob.glob(f"{roi_dir}/*_nrh-{nrh}_ix-{ix}_?.label.gii") 
+        files_to_use = [glob.glob(f"{roi_dir}/*_nrh-{nrh}_ix-{ix}_?.label.gii")
                         for nrh, ix in ROIs_to_use_str]
 
         # Store numeric values, file destination
-        ROIs = zip(range(0, n), sizes_to_use, indices_to_use, 
+        ROIs = zip(range(0, n), sizes_to_use, indices_to_use,
                    files_to_use)
 
         # print([n, len(sizes_to_use), len(indices_to_use), len(files_to_use),
@@ -231,37 +243,37 @@ def analyze_session(session_files, roi_dir, n, config_file, mre_dir):
     for n, nrh, ix, files in ROIs:
 
         # TO DO: Don't hardcode this width
-        nrh_zpad=str(nrh).zfill(3)
+        nrh_zpad = str(nrh).zfill(3)
 
         # Params
-        #   1: MRE; 2/3: L/R ROI; 
+        #   1: MRE; 2/3: L/R ROI;
         #   4-7: session dtseries, l/r midthickness, motion
-        #   8: FD; 9: smoothing kernel; 10: rm outliers?; 11: minutes; 
+        #   8: FD; 9: smoothing kernel; 10: rm outliers?; 11: minutes;
         #   12: Z-transformation?
         # Note: sp.run seems to require all args to be strings
-        sp.run(["bin/analysis-run_seedmap.sh", 
+        sp.run(["bin/analysis-run_seedmap.sh",
                 nrh_zpad,
                 mre_dir,
-                files[0], files[1], 
-                dtseries, l_midthick_file, r_midthick_file, motion_file,  
+                files[0], files[1],
+                dtseries, l_midthick_file, r_midthick_file, motion_file,
                 str(config['fd_threshold']),
-                str(config['smoothing_kernel']), 
+                str(config['smoothing_kernel']),
                 str(config['remove_outliers_yn']),
                 str(config['max_minutes']),
                 str(config['z_transform_yn'])
                 ])
 
-        cluster = sp.run(["bin/analysis-cluster.sh", 
+        cluster = sp.run(["bin/analysis-cluster.sh",
                           f"seedmap_dir_{nrh_zpad}",
                           str(config["cluster_value_min"]),
                           str(config["cluster_surf_area_min"])],
-                          capture_output=True)
+                         capture_output=True)
 
         # Log cluster info
         print(cluster.stdout.decode('ascii'))
 
-        result1 = re.findall(r'RESULT: \[\d+ \d+\]', 
-                            cluster.stdout.decode('ascii'))[0]
+        result1 = re.findall(r'RESULT: \[\d+ \d+\]',
+                             cluster.stdout.decode('ascii'))[0]
         result2 = result1.replace("RESULT: ", "")
         result3 = re.sub(r'[\[\]]', '', result2).split(' ')
 
@@ -273,11 +285,12 @@ def analyze_session(session_files, roi_dir, n, config_file, mre_dir):
 
         # break
 
-    return(results)
+    return results
 
-# RUN 
 
-## Check for wb command existence
+# RUN
+
+# Check for wb command existence
 wb_command = shutil.which("wb_command")
 
 if wb_command is None:
@@ -285,11 +298,11 @@ if wb_command is None:
 else:
     print(f"wb_command path is:\n\t{wb_command}")
 
-if args.flow == "roi":
+if args.command == "roi":
 
     create_rois(args.input_roi)
 
-elif args.flow == "analysis":
+elif args.command == "analysis":
 
     results = analyze_session(args.session_files, args.roi_dir, args.n,
                               args.config_file, args.mre_dir)

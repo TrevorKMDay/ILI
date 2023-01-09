@@ -1,15 +1,42 @@
 Bootstrap: docker
 From: centos:7
 
+%labels
+    AUTHOR day00096@umn.edu
+
+%files
+    /home/feczk001/day00096/ili_container/ili_manager.py
+    /home/feczk001/day00096/ili_container/bin
+    /home/feczk001/day00096/ili_container/workbench
+    /home/feczk001/day00096/ili_container/data
+
 %post
     yum install -y epel-release
     yum -y update
-    yum install -y R
 
-    # Install required R packages
-    R -e "install.packages(c(\"tidyverse\", \"ciftiTools\"))"
+    # openblas-devel required by R, libxml2-dev by tidyverse
+    yum install -y python3
+    # openblas-devel libxml2-dev
 
-    # TO DO: Workbench
+    # # Download and install R 4.0.4
+    # export R_VERSION=4.1.0
+    # curl -O \
+    #     https://cdn.rstudio.com/r/centos-7/pkgs/R-${R_VERSION}-1-1.x86_64.rpm
+    # yum install -y R-${R_VERSION}-1-1.x86_64.rpm
+    # ln -s /opt/R/${R_VERSION}/bin/R /usr/local/bin/R
+    # ln -s /opt/R/${R_VERSION}/bin/Rscript /usr/local/bin/Rscript
+
+    # # Install required R packages
+    # repo="https://mirror.las.iastate.edu/CRAN"
+    # R -e "install.packages(c(\"tidyverse\", \"ciftiTools\"),
+    #                         repo=\"${repo}\")"
+
+%environment
+    # Add workbench to path
+    export PATH=workbench/1.4.2/workbench/bin_rh_linux64/:${PATH}
+
+%runscript
+    python3 ili_manager.py $*
 
 %help
-    python ili_manger.py --help
+    python3 ili_manager.py --help
