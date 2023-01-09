@@ -1,4 +1,4 @@
-suppressPackageStartupMessages(library(tidyverse))
+# suppressPackageStartupMessages(library(tidyverse))
 library(ciftiTools)
 
 # Setup =====
@@ -36,15 +36,15 @@ size <- length(left_indices)
 set.seed(55455)
 
 message(paste("Size:", size))
-message(paste(size * as.numeric(n_permutations), 
+message(paste(size * as.numeric(n_permutations),
               "ROIs to create. This can take some time."))
 
 for (i in 1:size) {
 
   for (j in 1:n_permutations) {
 
-    out_file <- paste0(outdir, "/", outpfx, "_nrh-", str_pad(i, 3, "left", 0),
-                        "_ix-", str_pad(j, 2, "left", 0), ".dscalar.nii")
+    out_file <- paste0(outdir, "/", outpfx, "_nrh-", sprintf("%03d", i),
+                        "_ix-", sprintf("%02d", j), ".dscalar.nii")
 
     if (!file.exists(out_file)) {
 

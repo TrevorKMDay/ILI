@@ -33,7 +33,7 @@ ps_analysis = subparsers.add_parser("analysis", help="Analyze session.")
 # ROI CREATION OPTIONS ====
 
 # Input ROI
-ps_roi.add_argument("-i", "--roi_input", dest="roi_input",
+ps_roi.add_argument("-i", "--input_roi", dest="input_roi",
                     help="CIFTI file containing ROI to create.",
                     metavar="FILE")
 
@@ -83,18 +83,18 @@ if not args.command:
 # Declare functions
 
 
-def create_rois(roi_input, n):
+def create_rois(input_roi, n):
 
     print("\n=== Running ROI flow ... ===")
 
     # Check input
-    if roi_input is not None:
-        if ".dscalar.nii" in roi_input:
+    if input_roi is not None:
+        if ".dscalar.nii" in input_roi:
             # Copy input file to standard name
-            sp.run(["cp", roi_input, "original_roi.dscalar.nii"])
-            roi_input = "original_roi.dscalar.nii"
+            sp.run(["cp", input_roi, "original_roi.dscalar.nii"])
+            input_roi = "original_roi.dscalar.nii"
         else:
-            sys.exit(f"ERROR: Input ROI {roi_input} should be a .dscalar.nii "
+            sys.exit(f"ERROR: Input ROI {input_roi} should be a .dscalar.nii "
                      "file")
     else:
         # ROI needs to be supplied for ROI-making flow
@@ -103,14 +103,14 @@ def create_rois(roi_input, n):
     # 1. Create mirror file
     print("\n== Creating mirrored ROI ==")
     roi_mirrored = "flipped_roi.dscalar.nii"
-    sp.run(["bin/rois_create_mirror.sh", wb_command, roi_input, roi_mirrored])
+    sp.run(["bin/rois_create_mirror.sh", wb_command, input_roi, roi_mirrored])
 
     # 2. Create permutations
     print("\n== Creating permutations ==")
     output_dir = "roi_outputs"
     os.makedirs(output_dir, exist_ok=True)
     sp.run(["Rscript", "bin/rois_permute_ROI.R",
-            wb_command, roi_input, roi_mirrored, str(n), output_dir, "test"])
+            wb_command, input_roi, roi_mirrored, str(n), output_dir, "test"])
 
     # 3. Convert all dscalars -> dlabel.nii -> label.gii
     print("\n== Converting to label files ==")
@@ -300,7 +300,7 @@ else:
 
 if args.command == "roi":
 
-    create_rois(args.input_roi)
+    create_rois(args.input_roi, args.n)
 
 elif args.command == "analysis":
 
