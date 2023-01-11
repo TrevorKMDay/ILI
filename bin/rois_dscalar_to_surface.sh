@@ -1,7 +1,5 @@
 #!/bin/bash
 
-
-
 if [ ${#} -eq 1 ] ; then
     directory=${1}
 else
@@ -15,6 +13,8 @@ echo \
 1 255 0 0 255" > 1label.txt
 
 label_file="$(pwd)/1label.txt"
+
+wb_cmd=/workbench/1.4.2/workbench/bin_rh_linux64/wb_command
 
 ################################################################################
 
@@ -30,7 +30,7 @@ for dscalar in *.dscalar.nii ; do
 
     if [ ! -e "${dlabel}" ] ; then
 
-        wb_command -cifti-label-import \
+        ${wb_cmd} -cifti-label-import \
             "${dscalar}"    \
             "${label_file}" \
             "${dlabel}"     \
@@ -39,7 +39,7 @@ for dscalar in *.dscalar.nii ; do
         echo "Done with ${dlabel}"
 
     fi
-    
+
     # break
 
 done
@@ -54,7 +54,7 @@ for dlabel in $(find . -name "*_nrh-[0-9]*_ix-[0-9]*.dlabel.nii") ; do
     bn=${dlabel%.dlabel.nii}
     if [ ! -e "${bn}_L.label.gii" ] ; then
 
-        wb_command -cifti-separate \
+        ${wb_cmd} -cifti-separate \
             "${dlabel}" \
             COLUMN      \
             -label CORTEX_LEFT  "${bn}_L.label.gii" \
@@ -64,7 +64,7 @@ for dlabel in $(find . -name "*_nrh-[0-9]*_ix-[0-9]*.dlabel.nii") ; do
 
     fi
 
-done 
+done
 
 echo "Done with label giis for ${directory}"
 

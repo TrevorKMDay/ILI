@@ -21,8 +21,9 @@ From: centos:7
     # workbench dependencies
     yum install -y freetype.x86_64 mesa-libGL.x86_64
 
-    # R dependencies (openblas for R, libxml2 for tidyverse)
-    yum install -y openblas-devel libxml2-devel
+    # R dependencies (openblas for R; libxml2, libpng for ciftiTools)
+    yum install -y openblas-devel libxml2-devel libpng-devel.x86_64 \
+        libstdc++-devel.x86_64
 
     # Download and install R 4.0.4
     export R_VERSION=4.0.4

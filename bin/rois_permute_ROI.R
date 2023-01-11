@@ -1,7 +1,6 @@
-# suppressPackageStartupMessages(library(tidyverse))
-library(ciftiTools)
-
 # Setup =====
+
+library(ciftiTools)
 
 args <- commandArgs(trailingOnly = TRUE)
 
