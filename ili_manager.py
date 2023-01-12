@@ -22,7 +22,8 @@ from argparse import RawTextHelpFormatter
 parser = argparse.ArgumentParser(
                     prog='ProgramName',
                     description='What the program does',
-                    epilog='Text at the bottom of help',
+                    epilog="Run roi --help or analysis --help for more "
+                           "details",
                     formatter_class=RawTextHelpFormatter)
 
 subparsers = parser.add_subparsers(dest="command")
@@ -34,7 +35,8 @@ ps_analysis = subparsers.add_parser("analysis", help="Analyze session.")
 
 # Input ROI
 ps_roi.add_argument("-i", "--input_roi", dest="input_roi",
-                    help="CIFTI file containing ROI to create.",
+                    help="CIFTI file containing LEFT hemisphere ROI to work "
+                         "with. Does not currently support R->L.",
                     metavar="FILE")
 
 # How many variations at each L/R greyordinate ratio to create
@@ -43,6 +45,11 @@ ps_roi.add_argument("-n", "--n_repeats", dest="n",
                     help="How many alternative versions at each mixing "
                          "ratio L/R to create.",
                     metavar="N")
+
+ps_roi.add_argument("-p", "--prefix", dest="roi_prefix",
+                    default="crossotope",
+                    help="Prefix to output: PFX_nrh-X_ix-Y.dlabel.nii",
+                    metavar="STR")
 
 # ANALYSIS OPTIONS ====
 
@@ -83,7 +90,7 @@ if not args.command:
 # Declare functions
 
 
-def create_rois(input_roi, n):
+def create_rois(input_roi, n, prefix):
 
     print("\n=== Running ROI flow ... ===")
 
@@ -106,15 +113,15 @@ def create_rois(input_roi, n):
     sp.run(["bin/rois_create_mirror.sh", wb_command, input_roi, roi_mirrored])
 
     # 2. Create permutations
-    print("\n== Creating permutations ==")
-    output_dir = "roi_outputs"
+    print(f"\n== Creating permutations ({n})==")
+    output_dir = "/roi_outputs"
     os.makedirs(output_dir, exist_ok=True)
     sp.run(["Rscript", "bin/rois_permute_ROI.R",
-            wb_command, input_roi, roi_mirrored, str(n), output_dir, "test"])
+            wb_command, input_roi, roi_mirrored, str(n), output_dir, prefix])
 
     # 3. Convert all dscalars -> dlabel.nii -> label.gii
     print("\n== Converting to label files ==")
-    sp.run(["bin/rois_dscalar_to_surface.sh", output_dir])
+    sp.run(["bin/rois_dscalar_to_surface.sh", wb_command, output_dir])
 
     # 4. Clean up
     n_dscalar = len(glob.glob(f"{output_dir}/*.dscalar.nii"))
@@ -300,7 +307,7 @@ else:
 
 if args.command == "roi":
 
-    create_rois(args.input_roi, args.n)
+    create_rois(args.input_roi, args.n, args.roi_prefix)
 
 elif args.command == "analysis":
 

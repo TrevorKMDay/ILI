@@ -1,7 +1,8 @@
 #!/bin/bash
 
-if [ ${#} -eq 1 ] ; then
-    directory=${1}
+if [ ${#} -eq 2 ] ; then
+    wb_cmd=$(readlink -f ${1})
+    directory=${2}
 else
     echo "Supply directory"
     exit 1
@@ -14,7 +15,7 @@ echo \
 
 label_file="$(pwd)/1label.txt"
 
-wb_cmd=/workbench/1.4.2/workbench/bin_rh_linux64/wb_command
+# wb_cmd=workbench/1.4.2/workbench/bin_rh_linux64/wb_command
 
 ################################################################################
 
