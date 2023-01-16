@@ -37,7 +37,8 @@ ps_analysis = subparsers.add_parser("analysis", help="Analyze session.")
 ps_roi.add_argument("-i", "--input_roi", dest="input_roi",
                     help="CIFTI file containing LEFT hemisphere ROI to work "
                          "with. Does not currently support R->L.",
-                    metavar="FILE")
+                    metavar="FILE",
+                    required=True)
 
 # How many variations at each L/R greyordinate ratio to create
 ps_roi.add_argument("-n", "--n_repeats", dest="n",
@@ -57,16 +58,24 @@ ps_roi.add_argument("-p", "--prefix", dest="roi_prefix",
 ps_analysis.add_argument("-s", "--session", dest="session_files", nargs=4,
                          help="Files to analyze: dtseries, L/R midthickness, "
                               "motion",
-                         metavar="FILE")
+                         metavar="FILE",
+                         required=True)
 
 ps_analysis.add_argument("-r", "--roi_dir", dest="roi_dir",
                          help="Directory containing label files to use",
-                         metavar="DIR")
+                         metavar="DIR",
+                         required=True)
 
 ps_analysis.add_argument("-j", "--json_config", dest="config_file",
                          help="JSON file containing configuration for "
                               "seedmapper",
-                         metavar="FILE")
+                         metavar="FILE",
+                         required=True)
+
+ps_analysis.add_argument("-l", "--label", dest="label",
+                         help="Prefix for output CSV",
+                         default="crossotope",
+                         metavar="STR")
 
 ps_analysis.add_argument("-n", "--n_samples", dest="n",
                          type=int, default=100,
@@ -75,7 +84,20 @@ ps_analysis.add_argument("-n", "--n_samples", dest="n",
 
 ps_analysis.add_argument("-m", "--MRE", dest="mre_dir",
                          help="MATLAB runtime directory; R2019a recommended",
-                         metavar="DIR")
+                         metavar="DIR",
+                         required=True)
+
+ps_analysis.add_argument("-M", "--matlab", dest="matlab",
+                         help="Path to MATLAB binary.",
+                         metavar="FILE",
+                         required=True)
+
+# SHARED OPTIONS
+
+parser.add_argument("--cwd", dest="cwd",
+                    help="Current working directory",
+                    default="/home",
+                    metavar="DIR")
 
 args = parser.parse_args()
 
@@ -144,45 +166,42 @@ def create_rois(input_roi, n, prefix):
     [os.remove(i) for i in glob.glob(f"{output_dir}/*.dlabel.nii")]
 
 
-def analyze_session(session_files, roi_dir, n, config_file, mre_dir):
+def analyze_session(session_files, roi_dir, n, config_file, matlab, mre_dir):
 
     print("\n=== Running analysis flow ... ===")
 
-    # Check for MATLAB existence
-    matlab = shutil.which("matlab")
-    if matlab is None:
-        sys.exit("ERROR: matlab not found with `which`")
-    else:
-        print(f"matlab path is:\n\t{matlab}")
+    # TO DO: Check matlab is properly executable
 
     # Check input files
     if session_files is not None:
 
         if ".dtseries.nii" in session_files[0]:
             # Simplify legibility of code
-            dtseries = session_files[0]
-            print(f"dtseries is:\n\t{session_files}")
+            # os.path.realpath resolves relative paths, symlinks the user gives
+            #   it
+            dtseries = os.path.realpath(session_files[0])
+            print(f"dtseries is:\n\t{session_files[0]}")
         else:
             sys.exit("ERROR: Input session file 1 should be a .dtseries.nii "
                      "file")
 
         if ".surf.gii" in session_files[1]:
             # Simplify legibility of code
-            l_midthick_file = session_files[1]
+            l_midthick_file = os.path.realpath(session_files[1])
             print(f"L midthick is:\n\t{l_midthick_file}")
         else:
             sys.exit("ERROR: Input session file 2 should be a .surf.gii file")
 
         if ".surf.gii" in session_files[2]:
             # Simplify legibility of code
-            r_midthick_file = session_files[2]
+            r_midthick_file = os.path.realpath(session_files[2])
             print(f"R midthick is:\n\t{r_midthick_file}")
         else:
             sys.exit("ERROR: Input session file 3 should be a .surf.gii file")
 
         if ".mat" in session_files[3]:
             # Simplify legibility of code
-            motion_file = session_files[3]
+            motion_file = os.path.realpath(session_files[3])
             print(f"Motion file is:\n\t{motion_file}")
         else:
             sys.exit("ERROR: Input session file 4 should be a .mat file")
@@ -249,38 +268,49 @@ def analyze_session(session_files, roi_dir, n, config_file, mre_dir):
 
     for n, nrh, ix, files in ROIs:
 
+        l_roi_file = os.path.realpath(files[0])
+        r_roi_file = os.path.realpath(files[1])
+
         # TO DO: Don't hardcode this width
         nrh_zpad = str(nrh).zfill(3)
 
+        # Matlab function ciftiopen() seems to want to run "-cifti-convert
+        #   -to-gifti-ext" writing the output to the working directory (/home).
+        # This doesn't work in a container, so chdir to the filesystem /tmp
+        os.chdir("/tmp/")
+
         # Params
-        #   1: MRE; 2/3: L/R ROI;
-        #   4-7: session dtseries, l/r midthickness, motion
-        #   8: FD; 9: smoothing kernel; 10: rm outliers?; 11: minutes;
+        #   1: Zero-padded NRH
+        #   2-3: Where to find Matlab
+        #   4-5: L/R ROI files
+        #   6-9: session dtseries, l/r midthickness, motion
+        #   10: FD; 11: smoothing kernel; 12: rm outliers?; 13: minutes;
         #   12: Z-transformation?
         # Note: sp.run seems to require all args to be strings
-        sp.run(["bin/analysis-run_seedmap.sh",
+        sp.run([f"{args.cwd}/bin/analysis-run_seedmap.sh",
                 nrh_zpad,
-                mre_dir,
-                files[0], files[1],
+                matlab, mre_dir,
+                l_roi_file, r_roi_file,
                 dtseries, l_midthick_file, r_midthick_file, motion_file,
                 str(config['fd_threshold']),
                 str(config['smoothing_kernel']),
                 str(config['remove_outliers_yn']),
                 str(config['max_minutes']),
                 str(config['z_transform_yn'])
-                ])
+                ],
+               check=True)
 
-        cluster = sp.run(["bin/analysis-cluster.sh",
-                          f"seedmap_dir_{nrh_zpad}",
+        cluster = sp.run([f"{args.cwd}/bin/analysis-cluster.sh",
+                          f"/tmp/seedmap_dir_{nrh_zpad}",
                           str(config["cluster_value_min"]),
                           str(config["cluster_surf_area_min"])],
-                         capture_output=True)
+                         check=True,
+                         stdout=sp.PIPE, universal_newlines=True)
 
         # Log cluster info
-        print(cluster.stdout.decode('ascii'))
+        # print(cluster.stdout)
 
-        result1 = re.findall(r'RESULT: \[\d+ \d+\]',
-                             cluster.stdout.decode('ascii'))[0]
+        result1 = re.findall(r'RESULT: \[\d+ \d+\]', cluster.stdout)[0]
         result2 = result1.replace("RESULT: ", "")
         result3 = re.sub(r'[\[\]]', '', result2).split(' ')
 
@@ -289,6 +319,8 @@ def analyze_session(session_files, roi_dir, n, config_file, mre_dir):
         results[n, 1] = ix
         results[n, 2] = int(result3[0])
         results[n, 3] = int(result3[1])
+
+        # print([nrh, ix, result3])
 
         # break
 
@@ -312,7 +344,9 @@ if args.command == "roi":
 elif args.command == "analysis":
 
     results = analyze_session(args.session_files, args.roi_dir, args.n,
-                              args.config_file, args.mre_dir)
+                              args.config_file, args.matlab, args.mre_dir)
 
-    np.savetxt("results.csv", results, delimiter=",", fmt="%s",
-               header="nrh,ix,L,R")
+    print(results)
+
+    np.savetxt(f"/output/{args.label}_results.csv", results, delimiter=",",
+               fmt="%s", header="nrh,ix,L,R")

@@ -3,31 +3,35 @@
 # Assign variables
 
 nrh=${1}
-mre=${2}
-L_ROI=${3}
-R_ROI=${4}
-input_dtseries=${5}
-input_Lmidthickness=${6}
-input_Rmidthickness=${7}
-input_motion_mat=${8}
-FD=${9}
-SK=${10}
-rm_OUTLIER=${11}
-minutes=${12}
-z_transform=${13}
+matlab=${2}
+mre=${3}
+L_ROI=$(readlink -f "${4}")
+R_ROI=$(readlink -f "${5}")
+input_dtseries=$(readlink -f "${6}")
+input_Lmidthickness=$(readlink -f "${7}")
+input_Rmidthickness=$(readlink -f "${8}")
+input_motion_mat=$(readlink -f "${9}")
+FD=${10}
+SK=${11}
+rm_OUTLIER=${12}
+minutes=${13}
+z_transform=${14}
 
-# Exported with wrapper
-seed_map_wrapper=Cifti_conn_matrix_to_corr_dt_pt/seed_map_wrapper.py
+# The seedmap wrapper is consistently located in this place relative to this
+#   file.
+seed_map_wrapper=$(dirname "${0}")/../Cifti_conn_matrix_to_corr_dt_pt/seed_map_wrapper.py
 
 # Export cache root: This probably doesn't need to be done in a container, but
 # I know it works
-
+matlab_dir=$(dirname "${matlab}")
+export PATH=${matlab_dir}:${PATH}
 MCR_CACHE_ROOT=$(mktemp -d /tmp/mcr.XXXXXX)
 export MCR_CACHE_ROOT
 
 # Run seedmap
 
-tempdir=seedmap_dir_${nrh}
+# Work in /tmp to make container work
+tempdir=/tmp/seedmap_dir_${nrh}
 # Create output directory and exit if unsuccessful
 mkdir -p "${tempdir}" || (echo "Unable to create tempdir ${tempdir}" && exit 1)
 
@@ -37,6 +41,7 @@ echolog(){
     echo -e "${1}" | tee -a "${file}"
 }
 
+echo
 echo    "----------------"
 echolog "Input:"
 echolog "\t${input_dtseries}"
@@ -147,7 +152,7 @@ done
 
 # For flags where 0 means don't do, add that here:
 
-if [ "${SK}" == 0 ] ; then 
+if [ "${SK}" == 0 ] ; then
     SK_FLAG=""
 else
     SK_FLAG="--smoothing_kernel ${SK}"
@@ -171,21 +176,21 @@ run_and_z () {
     #   ROI (labeled 1).
 
     cmd="
-        python3 ${seed_map_wrapper}       \
-            --mre-dir       ${mre}         \
-            --wb_command    ${wb_command}  \
-            --source        Cifti_conn_matrix_to_corr_dt_pt/ \
-            --fd-threshold  ${FD}          \
-            --left          ${lmt_conc}    \
-            --right         ${rmt_conc}    \
-            --motion        ${motion_conc} \
-            --output        ${output}      \
-            ${SK_FLAG}                    \
-            ${OUTLIER_FLAG}               \
-            ${MIN_FLAG}                   \
-            ${TR}                         \
-            ${dtseries_conc}              \
-            ${ptseries_conc}              \
+        python3 ${seed_map_wrapper}                         \
+            --mre-dir       ${mre}                          \
+            --wb_command    ${wb_command}                   \
+            --source        $(dirname ${seed_map_wrapper})  \
+            --fd-threshold  ${FD}                           \
+            --left          ${lmt_conc}                     \
+            --right         ${rmt_conc}                     \
+            --motion        ${motion_conc}                  \
+            --output        ${output}                       \
+            ${SK_FLAG}                                      \
+            ${OUTLIER_FLAG}                                 \
+            ${MIN_FLAG}                                     \
+            ${TR}                                           \
+            ${dtseries_conc}                                \
+            ${ptseries_conc}                                \
             1
         "
 
@@ -228,4 +233,4 @@ run_and_z () {
 
 }
 
-run_and_z 
+run_and_z

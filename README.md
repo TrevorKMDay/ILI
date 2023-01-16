@@ -41,6 +41,47 @@ The ROI creation:
 
 # Running analysis
 
+The analysis flow requires a lot more bind points. From top to bottom:
+
+ 1. The session-level directory containing the `dtseries`, `midthickness`, and
+       motion `.mat` file. (TO DO: Use no `.mat` file).
+ 2. The ROIs created using the ROI flow above.
+ 3. The Matlab runtime. `R2019a` is known to work with this code.
+ 4. The JSON configuration file for the analysis parameters (see below).
+ 5. The directory to save the output CSV to. One CSV per session.
+
+The options to the container itself are more self-explanatory.
+
+ - The `--session` option requires all four files as arguments.
+ - `--roi_dir` takes the path to the ROIs and figures out how many there are.
+ - `--n_samples` is how many ROIs to use (e.g. if the ROI is 500 greyordinates,
+       you don't have to use them all). The default value is 100.
+ - The path to the Matlab binary (`--matlab`), since I can't package it in the
+       container.
+ - The path to the Matlab runtime (`--MRE`).
+ - The path to the JSON config file, which should be bound to the container
+       (`--json_config`.)
+ - Finally, the `--label` is prepended to the results, e.g.
+       `foobar_results.csv`.
+
+       MRE=${path_to_MRE}/MATLAB_Runtime_R2019a_update9/v96/
+
+       singularity run \
+              -B ${ex_sub}/:/session/            \
+              -B container_rois/:/input_rois/    \
+              -B ${MRE}:/matlab/                 \
+              -B config.json:/config.json        \
+              -B container_output:/output/       \
+              my_img.sif analysis                \
+                     --session                   \
+                            /session/{${dtseries},${lmidthick},${rmidthick},${motion}} \
+                     --roi_dir       /input_rois        \
+                     --n_samples     100                \
+                     --matlab        "$(which matlab)"  \
+                     --MRE           /matlab            \
+                     --json_config   /config.json       \
+                     --label         foobar
+
 ## Config file
 
 To make it the command line options simpler to use, the options to the
@@ -87,8 +128,9 @@ Currently, the no-transformation option isn't complete. Keep it set to 1.
 
 On [MSI](https://www.msi.umn.edu/)
 
- - **ROI creation**: With 16 GB RAM: 7-8 minutes for 490 total ROIs (1 s/ROI,
-    or 61 ROIs/minute).
+ - **ROI creation**:
+       With 16 GB RAM: 7-8 minutes for 490 total ROIs (1 s/ROI,
+       or 61 ROIs/minute).
  - **Analysis:**
-    with 56 GB RAM: 20 minutes for 100 samples (12 s/ROI
-    or 5 samples per minute).
+       With 56 GB RAM: 20 minutes for 100 samples (12 s/ROI or 5 samples per
+       minute).

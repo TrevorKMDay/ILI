@@ -9,7 +9,7 @@ echo "Value threshold: ${SURF_VAL_THRESH}"
 echo "SA threshold:    ${SURF_AREA_THRESH}"
 
 # Surfaces for refernce
-ex_surf=data/example_sub/sub-example_hemi
+ex_surf=$(dirname "${0}")/../data/example_sub/sub-example_hemi
 
 # Find input directory and extract sub label
 file=$(find "${input_dir}/seedmaps/" -name "*_roi-1_Z.dscalar.nii")
@@ -65,4 +65,4 @@ nL=$(wb_command -metric-stats "${cluster_dir}/cortex_left_${suffix}.func.gii" \
 nR=$(wb_command -metric-stats "${cluster_dir}/cortex_right_${suffix}.func.gii" \
         -reduce COUNT_NONZERO)
 
-echo "RESULT: [${nL} ${nR}]" 
+echo "RESULT: [${nL} ${nR}]"

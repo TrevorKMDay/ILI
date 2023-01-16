@@ -4,26 +4,42 @@ From: centos:7
 %labels
     AUTHOR day00096@umn.edu
 
-
 %files
-    /home/feczk001/day00096/ili_container/ili_manager.py    /home/
+    /home/feczk001/day00096/ili_container/ili_manager.py    /home
     /home/feczk001/day00096/ili_container/bin               /home
     /home/feczk001/day00096/ili_container/workbench         /home
     /home/feczk001/day00096/ili_container/data              /home
     /home/feczk001/day00096/ili_container/Cifti_conn_matrix_to_corr_dt_pt /home
 
 %post
+
     yum install -y epel-release
     yum -y update
 
     # Main packages
-    yum install -y python3 which
+    yum install -y which python3
+
+    # Install Python 3.7 https://tecadmin.net/install-python-3-7-on-centos/
+    # export PYTHON_VERSION=3.7.11
+    # yum install -y gcc openssl-devel bzip2-devel libffi-devel zlib-devel \
+    #     xz-devel make
+
+    # cd /usr/src
+    # curl -O \
+    #     https://www.python.org/ftp/python/3.7.11/Python-${PYTHON_VERSION}.tgz
+    # tar xzf Python-${PYTHON_VERSION}.tgz
+    # cd Python-${PYTHON_VERSION}
+    # ./configure --enable-optimizations
+    # make altinstall
 
     # workbench dependencies
     yum install -y freetype.x86_64 mesa-libGL.x86_64
 
     # R dependencies (openblas for R; libxml2, libpng for ciftiTools)
     yum install -y openblas-devel libxml2-devel libpng-devel.x86_64 gcc.x86_64
+
+    # matlab dependencies
+    yum install -y libXcomposite.x86_64
 
     # Download and install R 4.0.4
     export R_VERSION=4.0.4
@@ -39,11 +55,16 @@ From: centos:7
     repo="https://mirror.las.iastate.edu/CRAN"
     R -e "install.packages(c(\"RNifti\", \"ciftiTools\"), repo=\"${repo}\")"
 
+    # Fix permissions on workbench
+    chmod -R o+rX /home/
+
 %environment
     # Add workbench to path
-    export PATH=workbench/1.4.2/workbench/bin_rh_linux64/:${PATH}
+    wb=/home/workbench/1.4.2/workbench/bin_rh_linux64/
+    export PATH=${wb}:${PATH}
 
 %runscript
+    cd /home/
     python3 /home/ili_manager.py $*
 
 %help
