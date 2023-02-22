@@ -10,12 +10,15 @@ import os
 import json
 
 import numpy as np
+import pprint
 
 # Newlines in help
 from argparse import RawTextHelpFormatter
 
 # import sys; print(sys.version)
 # exit()
+
+pp = pprint.PrettyPrinter(indent=4)
 
 # PARSE OPTIONS =====
 
@@ -63,8 +66,7 @@ ps_analysis.add_argument("-s", "--session", dest="session_files", nargs=4,
 
 ps_analysis.add_argument("-r", "--roi_dir", dest="roi_dir",
                          help="Directory containing label files to use",
-                         metavar="DIR",
-                         required=True)
+                         metavar="DIR", default="/input_rois/")
 
 ps_analysis.add_argument("-j", "--json_config", dest="config_file",
                          help="JSON file containing configuration for "
@@ -216,10 +218,22 @@ def analyze_session(session_files, roi_dir, n, config_file, matlab, mre_dir):
         rois = [f for f in os.listdir(roi_dir) if
                 os.path.isfile(os.path.join(roi_dir, f))]
 
-        # Extract # of unique nrh values
-        size = len(set([re.findall(r"nrh-[0-9]+", f)[0] for f in rois]))
+        # print(rois)
+        # print([re.findall(r"nrh-[0-9]+", f)[0] for f in rois
+        #         if ".label.gii" in f])
 
-        indices = len(set([re.findall(r"ix-[0-9]+", f)[0] for f in rois]))
+        roi_labels = [f for f in rois if ".label.gii" in f]
+
+        # Extract # of unique nrh values
+        size = len(set([re.findall(r"nrh-[0-9]+", f)[0] for f in roi_labels]))
+
+        indices = len(set([re.findall(r"ix-[0-9]+", f)[0] for f in
+                           roi_labels]))
+
+        # Find the first index to get the width for zero-padding
+        index1 = [re.findall(r"ix-[0-9]+", f)[0] for f in roi_labels][0]
+        # Returns "ix-\d+", don't count "ix-"
+        ix_zpad = len(index1) - 3
 
         print(f"Found {size} ROIs with {indices} copies each.")
 
@@ -233,7 +247,7 @@ def analyze_session(session_files, roi_dir, n, config_file, matlab, mre_dir):
 
         # TO DO: zfill assumes sizes of exactly 3 for size and 2 for index
         sizes_to_use_str = [str(i).zfill(3) for i in sizes_to_use]
-        indices_to_use_str = [str(i).zfill(2) for i in indices_to_use]
+        indices_to_use_str = [str(i).zfill(ix_zpad) for i in indices_to_use]
 
         # Zip ratios, indices
         ROIs_to_use_str = zip(sizes_to_use_str, indices_to_use_str)
@@ -257,7 +271,7 @@ def analyze_session(session_files, roi_dir, n, config_file, matlab, mre_dir):
     if config_file is not None:
 
         config = json.load(open(config_file))
-        print(config)
+        pp.pprint(config)
 
     else:
         # Config needs to be supplied for session flow
