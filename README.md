@@ -4,6 +4,14 @@ Trevor Day // day00096@umn.edu
 
 Code to create the Singularity container for ILI ROI creation and processing.
 
+# Setup
+
+**Important:** This repository contains a reference to another repository
+(a module). On first pull, run the following code
+(see [here](https://stackoverflow.com/a/1032653/)).
+
+    git submodule update --init --recursive
+
 # Running ROI creation
 
 The container requires two bind points: the input ROI and the location to save
