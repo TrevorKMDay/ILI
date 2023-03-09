@@ -10,7 +10,11 @@ R_ROI=$(readlink -f "${5}")
 input_dtseries=$(readlink -f "${6}")
 input_Lmidthickness=$(readlink -f "${7}")
 input_Rmidthickness=$(readlink -f "${8}")
-input_motion_mat=$(readlink -f "${9}")
+if [ "${9}" != "NONE" ] ; then
+    input_motion_mat=$(readlink -f "${9}")
+else
+    input_motion_mat=NONE
+fi
 FD=${10}
 SK=${11}
 rm_OUTLIER=${12}
@@ -124,9 +128,14 @@ readlink -f "${input_Lmidthickness}" > "${lmt_conc}"
 readlink -f "${input_Rmidthickness}" > "${rmt_conc}"
 
 # Copy motion.mat to seedmap directory (it works better this way)
-local_mat_file="${tempdir}/motion.mat"
-cp "${input_motion_mat}" "${local_mat_file}"
-readlink -f "${local_mat_file}" > "${motion_conc}"
+if [ "${local_mat_file}" != "NONE" ] ; then
+    local_mat_file="${tempdir}/motion.mat"
+    cp "${input_motion_mat}" "${local_mat_file}"
+    readlink -f "${local_mat_file}" > "${motion_conc}"
+    motion_flag="--motion ${motion_conc}"
+else
+    motion_flag=""
+fi
 
 ################################################################################
 # Run
@@ -183,7 +192,7 @@ run_and_z () {
             --fd-threshold  ${FD}                           \
             --left          ${lmt_conc}                     \
             --right         ${rmt_conc}                     \
-            --motion        ${motion_conc}                  \
+            ${motion_flag}                                  \
             --output        ${output}                       \
             ${SK_FLAG}                                      \
             ${OUTLIER_FLAG}                                 \

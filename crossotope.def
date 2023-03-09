@@ -5,11 +5,11 @@ From: centos:7
     AUTHOR day00096@umn.edu
 
 %files
-    /home/feczk001/day00096/ili_container/ili_manager.py    /home
-    /home/feczk001/day00096/ili_container/bin               /home
-    /home/feczk001/day00096/ili_container/workbench         /home
-    /home/feczk001/day00096/ili_container/data              /home
-    /home/feczk001/day00096/ili_container/Cifti_conn_matrix_to_corr_dt_pt /home
+    ili_manager.py    /home
+    bin               /home
+    workbench         /home
+    data              /home
+    Cifti_conn_matrix_to_corr_dt_pt /home
 
 %post
 
