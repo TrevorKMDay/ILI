@@ -4,7 +4,14 @@ Trevor Day // day00096@umn.edu
 
 Code to create the Singularity container for ILI ROI creation and processing.
 
-# Running ROI creation
+## Setup
+
+This repository relies on a second repository as a submodule. When cloning for
+the first time, run the following code (see this [StackOverflow answer][1]).
+
+    git submodule update --recursive --remote
+
+## Running ROI creation
 
 The container requires two bind points: the input ROI and the location to save
 the created crossotopes to.
@@ -39,7 +46,7 @@ The ROI creation:
         are saved from all this processing: You don't need any of the other
         files.
 
-# Running analysis
+## Running analysis
 
 The analysis flow requires a lot more bind points. From top to bottom:
 
@@ -64,25 +71,25 @@ The options to the container itself are more self-explanatory.
  - Finally, the `--label` is prepended to the results, e.g.
        `foobar_results.csv`.
 
-       MRE=${path_to_MRE}/MATLAB_Runtime_R2019a_update9/v96/
+      MRE=${path_to_MRE}/MATLAB_Runtime_R2019a_update9/v96/
 
-       singularity run \
-              -B ${ex_sub}/:/session/            \
-              -B container_rois/:/input_rois/    \
-              -B ${MRE}:/matlab/                 \
-              -B config.json:/config.json        \
-              -B container_output:/output/       \
-              my_img.sif analysis                \
-                     --session                   \
-                            /session/{${dtseries},${lmidthick},${rmidthick},${motion}} \
-                     --roi_dir       /input_rois        \
-                     --n_samples     100                \
-                     --matlab        "$(which matlab)"  \
-                     --MRE           /matlab            \
-                     --json_config   /config.json       \
-                     --label         foobar
+      singularity run \
+            -B ${ex_sub}/:/session/            \
+            -B container_rois/:/input_rois/    \
+            -B ${MRE}:/matlab/                 \
+            -B config.json:/config.json        \
+            -B container_output:/output/       \
+            my_img.sif analysis                \
+                  --session                    \
+                        /session/{${dtseries},${lmidthick},${rmidthick},${motion}} \
+                  --roi_dir       /input_rois        \
+                  --n_samples     100                \
+                  --matlab        "$(which matlab)"  \
+                  --MRE           /matlab            \
+                  --json_config   /config.json       \
+                  --label         foobar
 
-## Config file
+### Config file
 
 To make it the command line options simpler to use, the options to the
 seedmap wrapper are included in a configuration JSON file, e.g.
@@ -113,18 +120,18 @@ seedmap wrapper are included in a configuration JSON file, e.g.
 Default values are those listed in example above. FYI no comments in actual
 JSON files.
 
-### Minutes
+#### Minutes
 
 `dtseries` files with less than 10 minutes of good data will be run; the output
 files have a different name than those that met the criterion.
 
 Files with less than 30 s of good data will not be run at all.
 
-### Z-threshold
+#### Z-threshold
 
 Currently, the no-transformation option isn't complete. Keep it set to 1.
 
-# Benchmarks
+## Benchmarks
 
 On [MSI](https://www.msi.umn.edu/)
 
@@ -134,3 +141,5 @@ On [MSI](https://www.msi.umn.edu/)
  - **Analysis:**
        With 56 GB RAM: 20 minutes for 100 samples (12 s/ROI or 5 samples per
        minute).
+
+[1]: https://stackoverflow.com/questions/1030169/pull-latest-changes-for-all-git-submodules
