@@ -71,8 +71,7 @@ ps_analysis.add_argument("-r", "--roi_dir", dest="roi_dir",
 ps_analysis.add_argument("-j", "--json_config", dest="config_file",
                          help="JSON file containing configuration for "
                               "seedmapper",
-                         metavar="FILE",
-                         required=True)
+                         metavar="FILE", default="/config.json")
 
 ps_analysis.add_argument("-l", "--label", dest="label",
                          help="Prefix for output CSV",
@@ -205,8 +204,12 @@ def analyze_session(session_files, roi_dir, n, config_file, matlab, mre_dir):
             # Simplify legibility of code
             motion_file = os.path.realpath(session_files[3])
             print(f"Motion file is:\n\t{motion_file}")
+        elif session_files[3] == "NONE":
+            motion_file = "NONE"
+            print(f"Motion file is:\n\t{motion_file}")
         else:
-            sys.exit("ERROR: Input session file 4 should be a .mat file")
+            sys.exit("ERROR: Input session file 4 should be a .mat file or"
+                     "NONE")
 
     else:
         # Session needs to be supplied for session flow
@@ -305,7 +308,7 @@ def analyze_session(session_files, roi_dir, n, config_file, matlab, mre_dir):
         #   10: FD; 11: smoothing kernel; 12: rm outliers?; 13: minutes;
         #   12: Z-transformation?
         # Note: sp.run seems to require all args to be strings
-        sp.run([f"{args.cwd}/bin/analysis-run_seedmap.sh",
+        sp.run([f"{args.cwd}/bin/  un_seedmap.sh",
                 nrh_zpad,
                 matlab, mre_dir,
                 l_roi_file, r_roi_file,
