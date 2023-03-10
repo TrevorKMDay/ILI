@@ -51,6 +51,7 @@ echolog "Input:"
 echolog "\t${input_dtseries}"
 echolog "\t${input_Lmidthickness}"
 echolog "\t${input_Rmidthickness}"
+echolog "\t${input_motion_mat}"
 echolog "ROIs:"
 echolog "\tL: ${L_ROI}"
 echolog "\tR: ${R_ROI}"
@@ -128,14 +129,17 @@ readlink -f "${input_Lmidthickness}" > "${lmt_conc}"
 readlink -f "${input_Rmidthickness}" > "${rmt_conc}"
 
 # Copy motion.mat to seedmap directory (it works better this way)
-if [ "${local_mat_file}" != "NONE" ] ; then
+echo "-${input_motion_mat}-"
+if [ "${input_motion_mat}" != "NONE" ] ; then
     local_mat_file="${tempdir}/motion.mat"
     cp "${input_motion_mat}" "${local_mat_file}"
     readlink -f "${local_mat_file}" > "${motion_conc}"
-    motion_flag="--motion ${motion_conc}"
+    MOTION_FLAG="--motion ${motion_conc}"
 else
-    motion_flag=""
+    MOTION_FLAG=""
 fi
+
+# exit
 
 ################################################################################
 # Run
@@ -192,7 +196,7 @@ run_and_z () {
             --fd-threshold  ${FD}                           \
             --left          ${lmt_conc}                     \
             --right         ${rmt_conc}                     \
-            ${motion_flag}                                  \
+            ${MOTION_FLAG}                                  \
             --output        ${output}                       \
             ${SK_FLAG}                                      \
             ${OUTLIER_FLAG}                                 \
@@ -208,7 +212,7 @@ run_and_z () {
     ${cmd}
 
     # Check to see if a file was created with the appropriate name
-    file_created=$(find "${tempdir}" -name "*task-rest_*_ROI1.dscalar.nii")
+    file_created=$(find "${tempdir}" -name "*_ROI1.dscalar.nii")
 
     if [ "${file_created}" == "" ] ; then
         echo "Output from seedmap not created, exiting"

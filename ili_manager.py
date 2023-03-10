@@ -304,7 +304,7 @@ def analyze_session(session_files, roi_dir, n, config_file, matlab, mre_dir):
         #   10: FD; 11: smoothing kernel; 12: rm outliers?; 13: minutes;
         #   12: Z-transformation?
         # Note: sp.run seems to require all args to be strings
-        sp.run([f"{args.cwd}/bin/analysis-run_seedmap.sh",
+        sp.run([f"{args.cwd}/bin/  un_seedmap.sh",
                 nrh_zpad,
                 matlab, mre_dir,
                 l_roi_file, r_roi_file,
