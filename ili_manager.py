@@ -285,8 +285,12 @@ def analyze_session(session_files, roi_dir, n, config_file, matlab, mre_dir):
 
     for n, nrh, ix, files in ROIs:
 
-        l_roi_file = os.path.realpath(files[0])
-        r_roi_file = os.path.realpath(files[1])
+        if "_L.label.gii" in files[0]:
+            l_roi_file = os.path.realpath(files[0])
+            r_roi_file = os.path.realpath(files[1])
+        elif "_L.label.gii" in files[1]:
+            l_roi_file = os.path.realpath(files[1])
+            r_roi_file = os.path.realpath(files[0])
 
         # TO DO: Don't hardcode this width
         nrh_zpad = str(nrh).zfill(3)
