@@ -231,9 +231,9 @@ run_and_z () {
         if [ ! -e "${z_dscalar}" ] ; then
 
             # equation from Z14
-            wb_command -cifti-math                           \
-                '(0.5*ln((1+r)/(1-r)))'                      \
-                "${z_dscalar}" \
+            wb_command -cifti-math      \
+                '(0.5*ln((1+r)/(1-r)))' \
+                "${z_dscalar}"          \
                 -var r "${new_file}"
 
             echo
