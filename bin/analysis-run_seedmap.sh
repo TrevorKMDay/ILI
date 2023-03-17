@@ -189,21 +189,21 @@ run_and_z () {
     #   ROI (labeled 1).
 
     cmd="
-        python3 ${seed_map_wrapper}                         \
-            --mre-dir       ${mre}                          \
-            --wb_command    ${wb_command}                   \
-            --source        $(dirname ${seed_map_wrapper})  \
-            --fd-threshold  ${FD}                           \
-            --left          ${lmt_conc}                     \
-            --right         ${rmt_conc}                     \
-            ${MOTION_FLAG}                                  \
-            --output        ${output}                       \
-            ${SK_FLAG}                                      \
-            ${OUTLIER_FLAG}                                 \
-            ${MIN_FLAG}                                     \
-            ${TR}                                           \
-            ${dtseries_conc}                                \
-            ${ptseries_conc}                                \
+        python3 ${seed_map_wrapper}                             \
+            --mre-dir       ${mre}                              \
+            --wb_command    ${wb_command}                       \
+            --source        $(dirname "${seed_map_wrapper}")    \
+            --fd-threshold  ${FD}                               \
+            --left          ${lmt_conc}                         \
+            --right         ${rmt_conc}                         \
+            ${MOTION_FLAG}                                      \
+            --output        ${output}                           \
+            ${SK_FLAG}                                          \
+            ${OUTLIER_FLAG}                                     \
+            ${MIN_FLAG}                                         \
+            ${TR}                                               \
+            ${dtseries_conc}                                    \
+            ${ptseries_conc}                                    \
             1
         "
 

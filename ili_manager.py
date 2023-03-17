@@ -285,6 +285,10 @@ def analyze_session(session_files, roi_dir, n, config_file, matlab, mre_dir):
 
     for n, nrh, ix, files in ROIs:
 
+        # If ROI files aren't found, skip
+        if len(files) != 2:
+            continue
+
         if "_L.label.gii" in files[0]:
             l_roi_file = os.path.realpath(files[0])
             r_roi_file = os.path.realpath(files[1])
