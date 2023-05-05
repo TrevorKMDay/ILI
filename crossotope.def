@@ -19,10 +19,17 @@ From: centos:7
     # Main packages
     yum install -y which python3
 
+    python3 --version
+
+    curl -O https://bootstrap.pypa.io/pip/3.6/get-pip.py
+    python3 /get-pip.py
+
+    pip install numpy
+
     # Install Python 3.7 https://tecadmin.net/install-python-3-7-on-centos/
     # export PYTHON_VERSION=3.7.11
-    # yum install -y gcc openssl-devel bzip2-devel libffi-devel zlib-devel \
-    #     xz-devel make
+    yum install -y gcc openssl-devel bzip2-devel libffi-devel zlib-devel \
+        xz-devel make
 
     # cd /usr/src
     # curl -O \
@@ -41,7 +48,7 @@ From: centos:7
     # matlab dependencies
     yum install -y libXcomposite.x86_64
 
-    # Download and install R 4.0.4
+    # # Download and install R 4.0.4
     export R_VERSION=4.0.4
     curl -O \
         https://cdn.rstudio.com/r/centos-7/pkgs/R-${R_VERSION}-1-1.x86_64.rpm
@@ -51,11 +58,11 @@ From: centos:7
     ln -s /opt/R/${R_VERSION}/bin/R /usr/local/bin/R
     ln -s /opt/R/${R_VERSION}/bin/Rscript /usr/local/bin/Rscript
 
-    # Install required R packages
+    # # Install required R packages
     repo="https://mirror.las.iastate.edu/CRAN"
     R -e "install.packages(c(\"RNifti\", \"ciftiTools\"), repo=\"${repo}\")"
 
-    # Fix permissions on workbench
+    # # Fix permissions on workbench
     chmod -R o+rX /home/
 
 %environment
