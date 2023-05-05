@@ -117,12 +117,15 @@ def create_rois(input_roi, n, prefix):
 
     print("\n=== Running ROI flow ... ===")
 
+    output_dir = "/roi_outputs"
+    os.makedirs(output_dir, exist_ok=True)
+
     # Check input
     if input_roi is not None:
         if ".dscalar.nii" in input_roi:
             # Copy input file to standard name
-            sp.run(["cp", input_roi, "original_roi.dscalar.nii"])
-            input_roi = "original_roi.dscalar.nii"
+            sp.run(["cp", input_roi, f"{output_dir}/original_roi.dscalar.nii"])
+            input_roi = f"{output_dir}/original_roi.dscalar.nii"
         else:
             sys.exit(f"ERROR: Input ROI {input_roi} should be a .dscalar.nii "
                      "file")
@@ -132,13 +135,11 @@ def create_rois(input_roi, n, prefix):
 
     # 1. Create mirror file
     print("\n== Creating mirrored ROI ==")
-    roi_mirrored = "flipped_roi.dscalar.nii"
+    roi_mirrored = f"{output_dir}/flipped_roi.dscalar.nii"
     sp.run(["bin/rois_create_mirror.sh", wb_command, input_roi, roi_mirrored])
 
     # 2. Create permutations
     print(f"\n== Creating permutations ({n})==")
-    output_dir = "/roi_outputs"
-    os.makedirs(output_dir, exist_ok=True)
     sp.run(["Rscript", "bin/rois_permute_ROI.R",
             wb_command, input_roi, roi_mirrored, str(n), output_dir, prefix])
 
@@ -147,9 +148,9 @@ def create_rois(input_roi, n, prefix):
     sp.run(["bin/rois_dscalar_to_surface.sh", wb_command, output_dir])
 
     # 4. Clean up
-    n_dscalar = len(glob.glob(f"{output_dir}/*.dscalar.nii"))
-    n_dlabel = len(glob.glob(f"{output_dir}/*.dlabel.nii"))
-    n_labelg = len(glob.glob(f"{output_dir}/*.label.gii"))
+    n_dscalar = len(glob.glob(f"{output_dir}/{prefix}_*.dscalar.nii"))
+    n_dlabel = len(glob.glob(f"{output_dir}/{prefix}_*.dlabel.nii"))
+    n_labelg = len(glob.glob(f"{output_dir}/{prefix}_*.label.gii"))
 
     # Check to make sure theres one dlabel per dscalar
     if not n_dscalar == n_dlabel:
