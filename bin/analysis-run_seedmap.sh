@@ -10,7 +10,11 @@ R_ROI=$(readlink -f "${5}")
 input_dtseries=$(readlink -f "${6}")
 input_Lmidthickness=$(readlink -f "${7}")
 input_Rmidthickness=$(readlink -f "${8}")
-input_motion_mat=$(readlink -f "${9}")
+if [ "${9}" != "NONE" ] ; then
+    input_motion_mat=$(readlink -f "${9}")
+else
+    input_motion_mat=NONE
+fi
 FD=${10}
 SK=${11}
 rm_OUTLIER=${12}
@@ -47,6 +51,7 @@ echolog "Input:"
 echolog "\t${input_dtseries}"
 echolog "\t${input_Lmidthickness}"
 echolog "\t${input_Rmidthickness}"
+echolog "\t${input_motion_mat}"
 echolog "ROIs:"
 echolog "\tL: ${L_ROI}"
 echolog "\tR: ${R_ROI}"
@@ -124,9 +129,17 @@ readlink -f "${input_Lmidthickness}" > "${lmt_conc}"
 readlink -f "${input_Rmidthickness}" > "${rmt_conc}"
 
 # Copy motion.mat to seedmap directory (it works better this way)
-local_mat_file="${tempdir}/motion.mat"
-cp "${input_motion_mat}" "${local_mat_file}"
-readlink -f "${local_mat_file}" > "${motion_conc}"
+echo "-${input_motion_mat}-"
+if [ "${input_motion_mat}" != "NONE" ] ; then
+    local_mat_file="${tempdir}/motion.mat"
+    cp "${input_motion_mat}" "${local_mat_file}"
+    readlink -f "${local_mat_file}" > "${motion_conc}"
+    MOTION_FLAG="--motion ${motion_conc}"
+else
+    MOTION_FLAG=""
+fi
+
+# exit
 
 ################################################################################
 # Run
@@ -183,7 +196,7 @@ run_and_z () {
             --fd-threshold  ${FD}                           \
             --left          ${lmt_conc}                     \
             --right         ${rmt_conc}                     \
-            --motion        ${motion_conc}                  \
+            ${MOTION_FLAG}                                  \
             --output        ${output}                       \
             ${SK_FLAG}                                      \
             ${OUTLIER_FLAG}                                 \
@@ -199,7 +212,7 @@ run_and_z () {
     ${cmd}
 
     # Check to see if a file was created with the appropriate name
-    file_created=$(find "${tempdir}" -name "*task-rest_*_ROI1.dscalar.nii")
+    file_created=$(find "${tempdir}" -name "*_ROI1.dscalar.nii")
 
     if [ "${file_created}" == "" ] ; then
         echo "Output from seedmap not created, exiting"
@@ -218,9 +231,9 @@ run_and_z () {
         if [ ! -e "${z_dscalar}" ] ; then
 
             # equation from Z14
-            wb_command -cifti-math                           \
-                '(0.5*ln((1+r)/(1-r)))'                      \
-                "${z_dscalar}" \
+            wb_command -cifti-math      \
+                '(0.5*ln((1+r)/(1-r)))' \
+                "${z_dscalar}"          \
                 -var r "${new_file}"
 
             echo
