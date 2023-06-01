@@ -46,6 +46,13 @@ The ROI creation:
         are saved from all this processing: You don't need any of the other
         files.
 
+### ROI tree
+
+      ili_manager.py
+       |- rois_create_mirror.sh
+       |- rois_permute_ROI.R
+       |- rois_dscalar_to_surface.sh
+
 ## Running analysis
 
 The analysis flow requires a lot more bind points. From top to bottom:
@@ -130,6 +137,13 @@ Files with less than 30 s of good data will not be run at all.
 #### Z-threshold
 
 Currently, the no-transformation option isn't complete. Keep it set to 1.
+
+### Analysis tree
+
+      ili_manager.py
+      |- analysis-run_seedmap.sh
+            |- seedmap_wrapper.py
+      |- analysis-cluster.sh
 
 ## Benchmarks
 

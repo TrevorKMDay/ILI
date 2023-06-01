@@ -12,6 +12,8 @@ From: centos:7
     ./data                              /home
     # Seedmap wrapper embedded as git submodule
     ./Cifti_conn_matrix_to_corr_dt_pt   /home
+    # Dummy label file TO DO: DELETE
+    ./1label.txt                        /home
 
 %post
 

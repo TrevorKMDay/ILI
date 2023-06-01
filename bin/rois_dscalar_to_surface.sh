@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ ${#} -eq 2 ] ; then
-    wb_cmd=$(readlink -f ${1})
+    wb_cmd=$(readlink -f "${1}")
     directory=${2}
 else
     echo "Supply directory"
@@ -9,11 +9,11 @@ else
 fi
 
 # Create label file that to apply to ROIs
+label_file="/roi_outputs/1label.txt"
+
 echo \
 "bilateral_ROI
-1 255 0 0 255" > 1label.txt
-
-label_file="$(pwd)/1label.txt"
+1 255 0 0 255" > "${label_file}"
 
 # wb_cmd=workbench/1.4.2/workbench/bin_rh_linux64/wb_command
 
@@ -25,6 +25,9 @@ cd "${directory}" || exit
 # For every dscalar, create a dlabel if both the dlabel file and the label
 # gifti don't exist (if the label gifti exists, the whole process is done)
 for dscalar in *.dscalar.nii ; do
+
+    # Haha
+    if [[ ${dscalar} == "flipped_roi.dscalar.nii" ]] ; then continue ; fi
 
     dlabel=${dscalar//scalar/label}
     bn=${dscalar%.dscalar.nii}
