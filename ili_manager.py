@@ -58,11 +58,29 @@ ps_roi.add_argument("-p", "--prefix", dest="roi_prefix",
 # ANALYSIS OPTIONS ====
 
 # Session input
-ps_analysis.add_argument("-s", "--session", dest="session_files", nargs=4,
-                         help="Files to analyze: dtseries, L/R midthickness, "
-                              "motion",
+
+# New version
+ps_analysis.add_argument(dest="dtseries_file",
+                         help="dtseries file")
+
+ps_analysis.add_argument(dest="motion_file",
+                         help="Motion file (ends in .mat)")
+
+ps_analysis.add_argument("--midthickness", nargs=2,
                          metavar="FILE",
-                         required=True)
+                         help="Midthickness files for smoothing: L, R")
+
+# ps_analysis.add_argument("-L", "--left_midthickness",
+#                          dest="left_midthick_file",
+#                          help="Left midthickness file",
+#                          metavar="FILE")
+
+# ps_analysis.add_argument("-R", "--right_midthickness",
+#                          dest="right_midthick_file",
+#                          help="Right midthickness file",
+#                          metavar="FILE")
+
+# Other flags
 
 ps_analysis.add_argument("-r", "--roi_dir", dest="roi_dir",
                          help="Directory containing label files to use",
@@ -109,6 +127,9 @@ if not args.command:
 
 # print(args)
 # sys.exit()
+
+# Check arguments
+# TO DO: Check for smoothing in config then check for midthickness files
 
 # Declare functions
 
@@ -168,53 +189,49 @@ def create_rois(input_roi, n, prefix):
     [os.remove(i) for i in glob.glob(f"{output_dir}/*.dlabel.nii")]
 
 
-def analyze_session(session_files, roi_dir, n, config_file, matlab, mre_dir):
+def analyze_session(dtseries_file, motion_file,
+                    roi_dir, n, config_file, matlab, mre_dir,
+                    l_midthick_file=None, r_midthick_file=None):
 
     print("\n=== Running analysis flow ... ===")
 
     # TO DO: Check matlab is properly executable
 
     # Check input files
-    if session_files is not None:
+    # os.path.realpath resolves relative paths, symlinks the user gives it
 
-        if ".dtseries.nii" in session_files[0]:
-            # Simplify legibility of code
-            # os.path.realpath resolves relative paths, symlinks the user gives
-            #   it
-            dtseries = os.path.realpath(session_files[0])
-            print(f"dtseries is:\n\t{session_files[0]}")
-        else:
-            sys.exit("ERROR: Input session file 1 should be a .dtseries.nii "
-                     "file")
-
-        if ".surf.gii" in session_files[1]:
-            # Simplify legibility of code
-            l_midthick_file = os.path.realpath(session_files[1])
-            print(f"L midthick is:\n\t{l_midthick_file}")
-        else:
-            sys.exit("ERROR: Input session file 2 should be a .surf.gii file")
-
-        if ".surf.gii" in session_files[2]:
-            # Simplify legibility of code
-            r_midthick_file = os.path.realpath(session_files[2])
-            print(f"R midthick is:\n\t{r_midthick_file}")
-        else:
-            sys.exit("ERROR: Input session file 3 should be a .surf.gii file")
-
-        if ".mat" in session_files[3]:
-            # Simplify legibility of code
-            motion_file = os.path.realpath(session_files[3])
-            print(f"Motion file is:\n\t{motion_file}")
-        elif session_files[3] == "NONE":
-            motion_file = "NONE"
-            print(f"Motion file is:\n\t{motion_file}")
-        else:
-            sys.exit("ERROR: Input session file 4 should be a .mat file or"
-                     "NONE")
-
+    if ".dtseries.nii" in dtseries_file:
+        # Simplify legibility of code
+        dtseries = os.path.realpath(dtseries_file)
+        print(f"dtseries is:\n\t{dtseries_file}")
     else:
-        # Session needs to be supplied for session flow
-        sys.exit("ERROR: Input session files required")
+        sys.exit("ERROR: First input should be a .dtseries.nii file")
+
+    if ".mat" in motion_file:
+        # Simplify legibility of code
+        motion_file = os.path.realpath(motion_file)
+        print(f"Motion file is:\n\t{motion_file}")
+    elif motion_file == "NONE":
+        motion_file = "NONE"
+        print(f"Motion file is:\n\t{motion_file}")
+    else:
+        sys.exit("ERROR: Second input should be a .mat file or NONE")
+
+    # Check midthickness files if given
+
+    if l_midthick_file is not None and ".surf.gii" in l_midthick_file:
+        # Simplify legibility of code
+        l_midthick_file = os.path.realpath(l_midthick_file)
+        print(f"L midthick is:\n\t{l_midthick_file}")
+    elif l_midthick_file is not None and ".surf.gii" not in l_midthick_file:
+        sys.exit("ERROR: Input session file 2 should be a .surf.gii file")
+
+    if r_midthick_file is not None and ".surf.gii" in r_midthick_file:
+        # Simplify legibility of code
+        r_midthick_file = os.path.realpath(r_midthick_file)
+        print(f"L midthick is:\n\t{r_midthick_file}")
+    elif r_midthick_file is not None and ".surf.gii" not in r_midthick_file:
+        sys.exit("ERROR: Input session file 2 should be a .surf.gii file")
 
     # Load in ROIs
     if roi_dir is not None:
@@ -365,8 +382,18 @@ if args.command == "roi":
 
 elif args.command == "analysis":
 
-    results = analyze_session(args.session_files, args.roi_dir, args.n,
-                              args.config_file, args.matlab, args.mre_dir)
+    if args.midthickness is None:
+        l_midthick_file = None
+        r_midthick_file = None
+    else:
+        l_midthick_file = args.midthickness[0]
+        r_midthick_file = args.midthickness[1]
+
+    results = analyze_session(args.dtseries_file, args.motion_file,
+                              args.roi_dir, args.n,
+                              args.config_file, args.matlab, args.mre_dir,
+                              l_midthick_file=l_midthick_file,
+                              r_midthick_file=r_midthick_file)
 
     print(results)
 

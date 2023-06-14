@@ -55,6 +55,9 @@ The ROI creation:
 
 ## Running analysis
 
+The analysis works best using _derivatives_ from the DCAN Labs
+[ABCD pipelines][2].
+
 The analysis flow requires a lot more bind points. From top to bottom:
 
  1. The session-level directory containing the `dtseries`, `midthickness`, and
@@ -157,3 +160,5 @@ On [MSI](https://www.msi.umn.edu/)
        minute).
 
 [1]: https://stackoverflow.com/questions/1030169/pull-latest-changes-for-all-git-submodules
+
+[2]: https://github.com/DCAN-Labs/abcd-hcp-pipeline
