@@ -2,8 +2,13 @@
 
 START=$(date '+%s')
 
-def=${1}
-sif="${def//.def/.sif}"
+if [ ${#} -eq 1 ] ; then
+    def=${1}
+    sif="${def//.def/.sif}"
+else
+    echo "Supply .def file path"
+    exit 1
+fi
 
 # --force overwrites current version
 singularity build \
