@@ -22,20 +22,20 @@ mkdir -p container_output/
 START=$(date '+%s')
 
 singularity run \
-    -B ${ex_sub}/:/session/         \
-    -B container_rois/:/input_rois/ \
-    -B ${MRE}:/matlab/              \
-    -B config.json:/config.json     \
-    -B container_output:/output/    \
-    crossotope.sif analysis         \
-        --session                   \
-            /session/{${dtseries},${lmidthick},${rmidthick},${motion}}  \
-        --roi_dir       /input_rois                                     \
-        --n_samples     100                                             \
-        --matlab        "$(which matlab)"                               \
-        --MRE           /matlab                                         \
-        --json_config   /config.json                                    \
-        --label         test2
+    -B ${ex_sub}/:/session/                 \
+    -B container_rois/:/input_rois/         \
+    -B ${MRE}:/matlab/                      \
+    -B config.json:/config.json             \
+    -B container_output:/output/            \
+    -B ili_manager.py:/home/ili_manager.py  \
+    crossotope.sif analysis                 \
+        --roi_dir       /input_rois         \
+        --n_samples     10                   \
+        --matlab        "$(which matlab)"   \
+        --MRE           /matlab             \
+        --json_config   /config.json        \
+        --label         test_newargs        \
+        /session/{${dtseries},${motion}}
 
 END=$(date '+%s')
 

@@ -2,6 +2,8 @@
 
 # Assign variables
 
+# readlink resolves symlinks for the user
+
 nrh=${1}
 matlab=${2}
 mre=${3}
