@@ -5,6 +5,8 @@ input_dir=${1}
 SURF_VAL_THRESH=${2}
 SURF_AREA_THRESH=${3}
 
+echo
+echo "STARTING CLUSTER SCRIPT"
 echo "Value threshold: ${SURF_VAL_THRESH}"
 echo "SA threshold:    ${SURF_AREA_THRESH}"
 

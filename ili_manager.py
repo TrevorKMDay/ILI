@@ -131,8 +131,30 @@ if not args.command:
 # Check arguments
 # TO DO: Check for smoothing in config then check for midthickness files
 
-# Declare functions
+if args.config_file is not None:
 
+    print("Configuration:")
+    config = json.load(open(args.config_file))
+    pp.pprint(config)
+    print(type(config))
+    print()
+
+else:
+    # Config needs to be supplied for session flow
+    sys.exit("ERROR: Configuration file needs to be supplied")
+
+if config["smoothing_kernel"] == 0:
+    print(" INFO: Smoothing kernel is 0, doing no smoothing.\n")
+else:
+    print(f" INFO: Smoothing kernel is {config['smoothing_kernel']}.\n")
+
+    if args.midthickness is None:
+        print("   ERROR: --midthickness must be supplied if smoothing kernel"
+              " is >0.")
+        sys.exit(1)
+
+
+# Declare functions
 
 def create_rois(input_roi, n, prefix):
 
@@ -190,8 +212,26 @@ def create_rois(input_roi, n, prefix):
 
 
 def analyze_session(dtseries_file, motion_file,
-                    roi_dir, n, config_file, matlab, mre_dir,
+                    roi_dir, n, config, matlab, mre_dir,
                     l_midthick_file=None, r_midthick_file=None):
+
+    """
+    Given a session, create the table of LI per seed laterality
+
+    :param str dtseries_file: The path to the dtseries file (ends in
+                                dtseries.nii).
+    :param str motion_file: The path to the motion file (ends in .mat)
+    :param str roi_dir: The path to the directory containing the crossotopes
+                        (created with roi subcommand)
+    :param int n: The number of subsamples to take
+    :param list config: The config file read in to python.
+    :param str matlab: The path to the MATLAB executable.
+    :param str mre_dir: The path to the MATLAB Runtime directory.
+    :param str l_midthick_file: The path to the left midthickness file (only if
+                                smoothing.)
+    :param str r_midthick_file: As above.
+
+    """
 
     print("\n=== Running analysis flow ... ===")
 
@@ -289,15 +329,6 @@ def analyze_session(dtseries_file, motion_file,
         # ROIs need to be supplied for session flow
         sys.exit("ERROR: Directory of ROIs required")
 
-    if config_file is not None:
-
-        config = json.load(open(config_file))
-        pp.pprint(config)
-
-    else:
-        # Config needs to be supplied for session flow
-        sys.exit("ERROR: Config file needs to be supplied")
-
     # Create empty array with size n(x)4: NRH, IX, L, R
     results = np.zeros((n, 4), dtype=np.int64)
 
@@ -346,10 +377,11 @@ def analyze_session(dtseries_file, motion_file,
                           str(config["cluster_value_min"]),
                           str(config["cluster_surf_area_min"])],
                          check=True,
-                         stdout=sp.PIPE, universal_newlines=True)
+                         stdout=sp.PIPE, stderr=sp.STDOUT,
+                         universal_newlines=True)
 
         # Log cluster info
-        # print(cluster.stdout)
+        print(cluster.stdout)
 
         result1 = re.findall(r'RESULT: \[\d+ \d+\]', cluster.stdout)[0]
         result2 = result1.replace("RESULT: ", "")
@@ -393,7 +425,7 @@ elif args.command == "analysis":
 
     results = analyze_session(args.dtseries_file, args.motion_file,
                               args.roi_dir, args.n,
-                              args.config_file, args.matlab, args.mre_dir,
+                              config, args.matlab, args.mre_dir,
                               l_midthick_file=l_midthick_file,
                               r_midthick_file=r_midthick_file)
 
