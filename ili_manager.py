@@ -10,6 +10,7 @@ import os
 import json
 
 import numpy as np
+import pandas as pd
 import pprint
 
 # Newlines in help
@@ -31,8 +32,9 @@ parser = argparse.ArgumentParser(
 
 subparsers = parser.add_subparsers(dest="command")
 
-ps_roi = subparsers.add_parser("roi", help="Create ROIs.")
-ps_analysis = subparsers.add_parser("analysis", help="Analyze session.")
+ps_roi = subparsers.add_parser("roi", help="1. Create ROIs")
+ps_analysis = subparsers.add_parser("analysis", help="2. Analyze session")
+ps_ili = subparsers.add_parser("ili", help="3. Calculate ILI from analysis CSV files")
 
 # ROI CREATION OPTIONS ====
 
@@ -86,6 +88,7 @@ ps_analysis.add_argument("-r", "--roi_dir", dest="roi_dir",
                          help="Directory containing label files to use",
                          metavar="DIR", default="/input_rois/")
 
+# TO DO: Make this a positional argument
 ps_analysis.add_argument("-j", "--json_config", dest="config_file",
                          help="JSON file containing configuration for "
                               "seedmapper",
@@ -111,6 +114,14 @@ ps_analysis.add_argument("-M", "--matlab", dest="matlab",
                          metavar="FILE",
                          required=True)
 
+# ILI options =======
+
+ps_ili.add_argument(dest="ili_directory",
+                    help="Directory of CSV files.")
+
+ps_ili.add_argument(dest="ili_output",
+                    help="CSV file to save ILI values to.")
+
 # SHARED OPTIONS
 
 parser.add_argument("--cwd", dest="cwd",
@@ -119,6 +130,8 @@ parser.add_argument("--cwd", dest="cwd",
                     metavar="DIR")
 
 args = parser.parse_args()
+
+print(args)
 
 # If no subcommand given, give help.
 if not args.command:
@@ -129,29 +142,30 @@ if not args.command:
 # sys.exit()
 
 # Check arguments
-# TO DO: Check for smoothing in config then check for midthickness files
 
-if args.config_file is not None:
+if args.command == "analysis":
 
-    print("Configuration:")
-    config = json.load(open(args.config_file))
-    pp.pprint(config)
-    print(type(config))
-    print()
+    if args.config_file is not None:
 
-else:
-    # Config needs to be supplied for session flow
-    sys.exit("ERROR: Configuration file needs to be supplied")
+        print("Configuration:")
+        config = json.load(open(args.config_file))
+        pp.pprint(config)
+        print(type(config))
+        print()
 
-if config["smoothing_kernel"] == 0:
-    print(" INFO: Smoothing kernel is 0, doing no smoothing.\n")
-else:
-    print(f" INFO: Smoothing kernel is {config['smoothing_kernel']}.\n")
+    else:
+        # Config needs to be supplied for analysis flow
+        sys.exit("ERROR: Configuration file needs to be supplied")
 
-    if args.midthickness is None:
-        print("   ERROR: --midthickness must be supplied if smoothing kernel"
-              " is >0.")
-        sys.exit(1)
+    if config["smoothing_kernel"] == 0:
+        print(" INFO: Smoothing kernel is 0, doing no smoothing.\n")
+    else:
+        print(f" INFO: Smoothing kernel is {config['smoothing_kernel']}.\n")
+
+        if args.midthickness is None:
+            print("   ERROR: --midthickness must be supplied if smoothing kernel"
+                " is >0.")
+            sys.exit(1)
 
 
 # Declare functions
@@ -399,16 +413,47 @@ def analyze_session(dtseries_file, motion_file,
 
     return results
 
+def calculate_ILI(directory, output_file):
+
+    files = [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]
+    csv_files = [os.path.join(directory, f) for f in files if ".csv" in f]
+
+    print(f"Found {len(csv_files)} CSV files")
+    
+    results = []
+
+    for i, csv in enumerate(csv_files):
+
+        ILI = sp.run(["Rscript", "bin/ili-calculate_ILI.R", csv],
+                     stdout=sp.PIPE)
+        
+        # Clean up file name
+        shortname = os.path.basename(csv)
+        shortname = str.replace(shortname, ".csv", "")
+
+        # Build up dataframe
+        results.append([shortname, float(ILI.stdout)])
+
+    df = pd.DataFrame(results)
+    df.columns = ["file", "ILI"]
+
+    df.to_csv(output_file)
+    print(f"{output_file} saved!")
 
 # RUN
 
-# Check for wb command existence
-wb_command = shutil.which("wb_command")
+# Check for wb command existence (only roi or analysis)
 
-if wb_command is None:
-    sys.exit("ERROR: wb_command not found with `which`")
-else:
-    print(f"wb_command path is:\n\t{wb_command}")
+if args.command == "roi" or args.command == "analysis":
+
+    wb_command = shutil.which("wb_command")
+
+    if wb_command is None:
+        sys.exit("ERROR: wb_command not found with `which`")
+    else:
+        print(f"wb_command path is:\n\t{wb_command}")
+
+# MAIN EXECUTION ===
 
 if args.command == "roi":
 
@@ -424,12 +469,16 @@ elif args.command == "analysis":
         r_midthick_file = args.midthickness[1]
 
     results = analyze_session(args.dtseries_file, args.motion_file,
-                              args.roi_dir, args.n,
-                              config, args.matlab, args.mre_dir,
-                              l_midthick_file=l_midthick_file,
-                              r_midthick_file=r_midthick_file)
+                            args.roi_dir, args.n,
+                            config, args.matlab, args.mre_dir,
+                            l_midthick_file=l_midthick_file,
+                            r_midthick_file=r_midthick_file)
 
     print(results)
 
     np.savetxt(f"/output/{args.label}_results.csv", results, delimiter=",",
-               fmt="%s", header="nrh,ix,L,R")
+            fmt="%s", header="nrh,ix,L,R")
+    
+elif args.command == "ili":
+
+    calculate_ILI(args.ili_directory, args.ili_output)
