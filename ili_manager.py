@@ -231,6 +231,11 @@ def analyze_session(session_files, roi_dir, n, config_file, matlab, mre_dir):
         # Extract # of unique nrh values
         size = len(set([re.findall(r"nrh-[0-9]+", f)[0] for f in roi_labels]))
 
+        if size < n:
+            print(f"Requested # of samples ({n}) is smaller than size, "
+                   "({size}), setting n to {size}.")
+            n = size
+
         indices = len(set([re.findall(r"ix-[0-9]+", f)[0] for f in
                            roi_labels]))
 
