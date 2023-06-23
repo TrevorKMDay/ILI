@@ -233,7 +233,7 @@ def analyze_session(session_files, roi_dir, n, config_file, matlab, mre_dir):
 
         if size < n:
             print(f"Requested # of samples ({n}) is smaller than size, "
-                   "({size}), setting n to {size}.")
+                   f"({size}), setting n to {size}.")
             n = size
 
         indices = len(set([re.findall(r"ix-[0-9]+", f)[0] for f in
@@ -247,7 +247,7 @@ def analyze_session(session_files, roi_dir, n, config_file, matlab, mre_dir):
         print(f"Found {size} ROIs with {indices} copies each.")
 
         # Select n ratios from those available
-        sizes_to_use = random.sample(list(range(1, size)), n)
+        sizes_to_use = random.sample(list(range(1, size + 1)), n)
         sizes_to_use.sort()
 
         # For each size selected, choose an index to use for that ROI
