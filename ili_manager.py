@@ -288,6 +288,11 @@ def analyze_session(dtseries_file, motion_file,
         # Extract # of unique nrh values
         size = len(set([re.findall(r"nrh-[0-9]+", f)[0] for f in roi_labels]))
 
+        if size < n:
+            print(f"Requested # of samples ({n}) is smaller than size, "
+                   f"({size}), setting n to {size}.")
+            n = size
+
         indices = len(set([re.findall(r"ix-[0-9]+", f)[0] for f in
                            roi_labels]))
 
@@ -299,7 +304,7 @@ def analyze_session(dtseries_file, motion_file,
         print(f"Found {size} ROIs with {indices} copies each.")
 
         # Select n ratios from those available
-        sizes_to_use = random.sample(list(range(1, size)), n)
+        sizes_to_use = random.sample(list(range(1, size + 1)), n)
         sizes_to_use.sort()
 
         # For each size selected, choose an index to use for that ROI
