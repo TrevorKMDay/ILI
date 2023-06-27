@@ -7,3 +7,7 @@ roi_outputs/
 # Files created during processing
 seedmap_dir_*
 results.csv
+
+# R files
+**/*.RData
+**/*.Rhistory
