@@ -27,7 +27,7 @@ From: centos:7
     curl -O https://bootstrap.pypa.io/pip/3.6/get-pip.py
     python3 /get-pip.py
 
-    pip install numpy
+    pip install numpy pandas
 
     # Install Python 3.7 https://tecadmin.net/install-python-3-7-on-centos/
     # export PYTHON_VERSION=3.7.11
