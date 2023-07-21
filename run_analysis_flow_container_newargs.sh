@@ -28,6 +28,7 @@ singularity run \
     -B config.json:/config.json             \
     -B container_output:/output/            \
     -B ili_manager.py:/home/ili_manager.py  \
+    -B bin/fd_extraction.R:/home/bin/fd_extraction.R \
     crossotope.sif analysis                 \
         --roi_dir       /input_rois         \
         --n_samples     10                   \

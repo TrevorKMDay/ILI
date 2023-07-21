@@ -267,11 +267,18 @@ def analyze_session(dtseries_file, motion_file,
         motion_file = os.path.realpath(motion_file)
         print(f"Motion file is:\n\t{motion_file}")
 
-        sp.run(["Rscript", "{args.cwd}/bin/fd_extraction.R", motion_file,
-                config["fd_threshold"]],
-               stdout="/output/data_info.txt")
+        # Extract important pieces of info from mat file and save
+        data_info = sp.run(["Rscript", f"{args.cwd}/bin/fd_extraction.R", motion_file,
+                            str(config["fd_threshold"])],
+                           check=True,
+                           stdout=sp.PIPE, stderr=sp.STDOUT,
+                           universal_newlines=True)
+
+        data_info_file = "/output/data_info.txt"
+        print(data_info.stdout)
+        with open(data_info_file, "w") as f:
+            f.write(data_info.stdout)
         
-        exit()
 
     elif motion_file == "NONE":
         motion_file = "NONE"

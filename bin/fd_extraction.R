@@ -54,16 +54,18 @@ if (is.na(param)) {
   message(paste("Remaining frames:      ", remaining_frames))
   message(paste("Remaining seconds:     ", remaining_seconds))
   message(paste("FD of remaining frames:", round(remaining_mean_FD, 3)))
-}
-
-if (param %in% c(1, "TR")) {
-  message(TR)
-} else if (param %in% c(2, "frames")) {
-  message(remaining_frames)
-} else if (param %in% c(3, "sec")) {
-  message(remaining_seconds)
-} else if (param %in% c(4, "FD")) {
-  message(round(remaining_mean_FD, 2))
 } else {
-  stop("Uncrecognized parameter")
+
+  if (param %in% c(1, "TR")) {
+    message(TR)
+  } else if (param %in% c(2, "frames")) {
+    message(remaining_frames)
+  } else if (param %in% c(3, "sec")) {
+    message(remaining_seconds)
+  } else if (param %in% c(4, "FD")) {
+    message(round(remaining_mean_FD, 2))
+  } else {
+    stop(paste("Uncrecognized parameter:", param))
+  }
+
 }
