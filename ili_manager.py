@@ -163,8 +163,8 @@ if args.command == "analysis":
         print(f" INFO: Smoothing kernel is {config['smoothing_kernel']}.\n")
 
         if args.midthickness is None:
-            print("   ERROR: --midthickness must be supplied if smoothing kernel"
-                " is >0.")
+            print("   ERROR: --midthickness must be supplied if smoothing"
+                " kernel is >0.")
             sys.exit(1)
 
 
@@ -262,14 +262,23 @@ def analyze_session(dtseries_file, motion_file,
         sys.exit("ERROR: First input should be a .dtseries.nii file")
 
     if ".mat" in motion_file:
+        
         # Simplify legibility of code
         motion_file = os.path.realpath(motion_file)
         print(f"Motion file is:\n\t{motion_file}")
+
+        sp.run(["Rscript", "{args.cwd}/bin/fd_extraction.R", motion_file,
+                config["fd_threshold"]],
+               stdout="/output/data_info.txt")
+        
+        exit()
+
     elif motion_file == "NONE":
         motion_file = "NONE"
         print(f"Motion file is:\n\t{motion_file}")
     else:
         sys.exit("ERROR: Second input should be a .mat file or NONE")
+
 
     # Check midthickness files if given
 
@@ -474,10 +483,10 @@ elif args.command == "analysis":
         r_midthick_file = args.midthickness[1]
 
     results = analyze_session(args.dtseries_file, args.motion_file,
-                            args.roi_dir, args.n,
-                            config, args.matlab, args.mre_dir,
-                            l_midthick_file=l_midthick_file,
-                            r_midthick_file=r_midthick_file)
+                              args.roi_dir, args.n,
+                              config, args.matlab, args.mre_dir,
+                              l_midthick_file=l_midthick_file,
+                              r_midthick_file=r_midthick_file)
 
     print(results)
 
