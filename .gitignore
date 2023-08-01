@@ -11,3 +11,6 @@ results.csv
 # R files
 **/*.RData
 **/*.Rhistory
+
+# This is for local use only
+old_containers
