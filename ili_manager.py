@@ -34,7 +34,8 @@ subparsers = parser.add_subparsers(dest="command")
 
 ps_roi = subparsers.add_parser("roi", help="1. Create ROIs")
 ps_analysis = subparsers.add_parser("analysis", help="2. Analyze session")
-ps_ili = subparsers.add_parser("ili", help="3. Calculate ILI from analysis CSV files")
+ps_ili = subparsers.add_parser("ili",
+                               help="3. Calculate ILI from analysis CSV files")
 
 # ROI CREATION OPTIONS ====
 
@@ -164,7 +165,7 @@ if args.command == "analysis":
 
         if args.midthickness is None:
             print("   ERROR: --midthickness must be supplied if smoothing"
-                " kernel is >0.")
+                  " kernel is >0.")
             sys.exit(1)
 
 
@@ -262,14 +263,14 @@ def analyze_session(dtseries_file, motion_file,
         sys.exit("ERROR: First input should be a .dtseries.nii file")
 
     if ".mat" in motion_file:
-        
+
         # Simplify legibility of code
         motion_file = os.path.realpath(motion_file)
         print(f"Motion file is:\n\t{motion_file}")
 
         # Extract important pieces of info from mat file and save
-        data_info = sp.run(["Rscript", f"{args.cwd}/bin/fd_extraction.R", motion_file,
-                            str(config["fd_threshold"])],
+        data_info = sp.run(["Rscript", f"{args.cwd}/bin/fd_extraction.R",
+                            motion_file, str(config["fd_threshold"])],
                            check=True,
                            stdout=sp.PIPE, stderr=sp.STDOUT,
                            universal_newlines=True)
@@ -278,7 +279,6 @@ def analyze_session(dtseries_file, motion_file,
         print(data_info.stdout)
         with open(data_info_file, "w") as f:
             f.write(data_info.stdout)
-        
 
     elif motion_file == "NONE":
         motion_file = "NONE"
@@ -286,9 +286,7 @@ def analyze_session(dtseries_file, motion_file,
     else:
         sys.exit("ERROR: Second input should be a .mat file or NONE")
 
-
     # Check midthickness files if given
-
     if l_midthick_file is not None and ".surf.gii" in l_midthick_file:
         # Simplify legibility of code
         l_midthick_file = os.path.realpath(l_midthick_file)
@@ -320,7 +318,7 @@ def analyze_session(dtseries_file, motion_file,
 
         if size < n:
             print(f"Requested # of samples ({n}) is smaller than size, "
-                   f"({size}), setting n to {size}.")
+                  f"({size}), setting n to {size}.")
             n = size
 
         indices = len(set([re.findall(r"ix-[0-9]+", f)[0] for f in
@@ -368,6 +366,12 @@ def analyze_session(dtseries_file, motion_file,
     results = np.zeros((n, 4), dtype=np.int64)
 
     for n, nrh, ix, files in ROIs:
+
+        # Check that ROI files were found
+        if len(files) != 2:
+            print(f"Did not find exactly two ROI files for nrh {nrh}, ix {ix}")
+            print("Found: ")
+            print(files_to_use)
 
         if "_L.label.gii" in files[0]:
             l_roi_file = os.path.realpath(files[0])
@@ -434,20 +438,23 @@ def analyze_session(dtseries_file, motion_file,
 
     return results
 
+
 def calculate_ILI(directory, output_file):
 
-    files = [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]
+    files = [f for f in os.listdir(directory)
+             if os.path.isfile(os.path.join(directory, f))]
+
     csv_files = [os.path.join(directory, f) for f in files if ".csv" in f]
 
     print(f"Found {len(csv_files)} CSV files")
-    
+
     results = []
 
     for i, csv in enumerate(csv_files):
 
         ILI = sp.run(["Rscript", "bin/ili-calculate_ILI.R", csv],
                      stdout=sp.PIPE)
-        
+
         # Clean up file name
         shortname = os.path.basename(csv)
         shortname = str.replace(shortname, ".csv", "")
@@ -464,6 +471,7 @@ def calculate_ILI(directory, output_file):
 # RUN
 
 # Check for wb command existence (only roi or analysis)
+
 
 if args.command == "roi" or args.command == "analysis":
 
@@ -498,8 +506,8 @@ elif args.command == "analysis":
     print(results)
 
     np.savetxt(f"/output/{args.label}_results.csv", results, delimiter=",",
-            fmt="%s", header="nrh,ix,L,R")
-    
+               fmt="%s", header="nrh,ix,L,R")
+
 elif args.command == "ili":
 
     calculate_ILI(args.ili_directory, args.ili_output)
