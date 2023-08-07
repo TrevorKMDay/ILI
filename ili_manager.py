@@ -34,7 +34,11 @@ subparsers = parser.add_subparsers(dest="command")
 
 ps_roi = subparsers.add_parser("roi", help="1. Create ROIs")
 ps_analysis = subparsers.add_parser("analysis", help="2. Analyze session")
-ps_ili = subparsers.add_parser("ili", help="3. Calculate ILI from analysis CSV files")
+ps_ili = subparsers.add_parser("ili",
+                               help="3. Calculate ILI from analysis CSV files")
+ps_version = subparsers.add_parser("version", help="Get the current version")
+
+VERSION = "v0.3.2"
 
 # ROI CREATION OPTIONS ====
 
@@ -163,8 +167,8 @@ if args.command == "analysis":
         print(f" INFO: Smoothing kernel is {config['smoothing_kernel']}.\n")
 
         if args.midthickness is None:
-            print("   ERROR: --midthickness must be supplied if smoothing kernel"
-                " is >0.")
+            print("   ERROR: --midthickness must be supplied if smoothing"
+                  " kernel is >0.")
             sys.exit(1)
 
 
@@ -304,7 +308,7 @@ def analyze_session(dtseries_file, motion_file,
 
         if size < n:
             print(f"Requested # of samples ({n}) is smaller than size, "
-                   f"({size}), setting n to {size}.")
+                  f"({size}), setting n to {size}.")
             n = size
 
         indices = len(set([re.findall(r"ix-[0-9]+", f)[0] for f in
@@ -418,20 +422,25 @@ def analyze_session(dtseries_file, motion_file,
 
     return results
 
+
 def calculate_ILI(directory, output_file):
 
-    files = [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]
+    # Find all files in directory
+    files = [f for f in os.listdir(directory)
+             if os.path.isfile(os.path.join(directory, f))]
+
+    # Reduce to CSV files
     csv_files = [os.path.join(directory, f) for f in files if ".csv" in f]
 
     print(f"Found {len(csv_files)} CSV files")
-    
+
     results = []
 
     for i, csv in enumerate(csv_files):
 
         ILI = sp.run(["Rscript", "bin/ili-calculate_ILI.R", csv],
                      stdout=sp.PIPE)
-        
+
         # Clean up file name
         shortname = os.path.basename(csv)
         shortname = str.replace(shortname, ".csv", "")
@@ -449,6 +458,7 @@ def calculate_ILI(directory, output_file):
 
 # Check for wb command existence (only roi or analysis)
 
+
 if args.command == "roi" or args.command == "analysis":
 
     wb_command = shutil.which("wb_command")
@@ -460,7 +470,11 @@ if args.command == "roi" or args.command == "analysis":
 
 # MAIN EXECUTION ===
 
-if args.command == "roi":
+if args.command == "version":
+
+    print(f"Version: {VERSION}")
+
+elif args.command == "roi":
 
     create_rois(args.input_roi, args.n, args.roi_prefix)
 
@@ -474,16 +488,16 @@ elif args.command == "analysis":
         r_midthick_file = args.midthickness[1]
 
     results = analyze_session(args.dtseries_file, args.motion_file,
-                            args.roi_dir, args.n,
-                            config, args.matlab, args.mre_dir,
-                            l_midthick_file=l_midthick_file,
-                            r_midthick_file=r_midthick_file)
+                              args.roi_dir, args.n,
+                              config, args.matlab, args.mre_dir,
+                              l_midthick_file=l_midthick_file,
+                              r_midthick_file=r_midthick_file)
 
     print(results)
 
     np.savetxt(f"/output/{args.label}_results.csv", results, delimiter=",",
-            fmt="%s", header="nrh,ix,L,R")
-    
+               fmt="%s", header="nrh,ix,L,R")
+
 elif args.command == "ili":
 
     calculate_ILI(args.ili_directory, args.ili_output)
