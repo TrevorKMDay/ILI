@@ -21,6 +21,9 @@ else
     sed -i "s/VERSION = .*/VERSION = \"${ver}\"/" ili_manager.py
 fi
 
+# Blank line for legibility
+echo
+
 # --force overwrites current version
 singularity build \
     --fakeroot --fix-perms --force --writable-tmpfs \

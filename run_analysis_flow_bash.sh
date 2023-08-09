@@ -16,16 +16,16 @@ which wb_command
 # Example session files
 ex_sub=sub-NDARINV003RTV85/ses-baselineYear1Arm1
 dtseries=${ex_sub}/func/sub-NDARINV003RTV85_ses-baselineYear1Arm1_task-rest_bold_desc-filtered_timeseries.dtseries.nii
-lmidthick=${ex_sub}/anat/sub-NDARINV003RTV85_ses-baselineYear1Arm1_hemi-L_space-MNI_mesh-fsLR32k_midthickness.surf.gii
-rmidthick=${ex_sub}/anat/sub-NDARINV003RTV85_ses-baselineYear1Arm1_hemi-R_space-MNI_mesh-fsLR32k_midthickness.surf.gii
 motion=${ex_sub}/func/sub-NDARINV003RTV85_ses-baselineYear1Arm1_task-rest_desc-filtered_motion_mask.mat
 
 python3 --version
 
-python3 ili_manager.py --cwd "$(pwd)" analysis          \
-    -s ${dtseries} ${lmidthick} ${rmidthick} ${motion}  \
-    -r container_rois                                   \
-    -n 100                                              \
-    -m ${MRE}                                           \
-    -M "$(which matlab)"                                \
-    -j config.json
+ls -lrth ${dtseries} ${motion}
+
+python3 ili_manager.py --cwd "$(pwd)" analysis  \
+    -r container_rois                           \
+    -n 100                                      \
+    -m ${MRE}                                   \
+    -M "$(which matlab)"                        \
+    -j config.json                              \
+    ${dtseries} ${motion}

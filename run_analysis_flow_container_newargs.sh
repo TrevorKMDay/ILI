@@ -12,9 +12,9 @@ MRE=${damien_utilities}/MATLAB_Runtime_R2019a_update9/v96/
 # Example session files
 ex_sub=sub-NDARINV003RTV85/ses-baselineYear1Arm1
 dtseries=func/sub-NDARINV003RTV85_ses-baselineYear1Arm1_task-rest_bold_desc-filtered_timeseries.dtseries.nii
-lmidthick=anat/sub-NDARINV003RTV85_ses-baselineYear1Arm1_hemi-L_space-MNI_mesh-fsLR32k_midthickness.surf.gii
-rmidthick=anat/sub-NDARINV003RTV85_ses-baselineYear1Arm1_hemi-R_space-MNI_mesh-fsLR32k_midthickness.surf.gii
 motion=func/sub-NDARINV003RTV85_ses-baselineYear1Arm1_task-rest_desc-filtered_motion_mask.mat
+
+ls -lrh ${ex_sub}/{${dtseries},${motion}} ; exit
 
 # Directory must exist to be mounted
 mkdir -p container_output/
