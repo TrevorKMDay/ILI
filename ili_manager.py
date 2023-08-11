@@ -38,7 +38,7 @@ ps_ili = subparsers.add_parser("ili",
                                help="3. Calculate ILI from analysis CSV files")
 ps_version = subparsers.add_parser("version", help="Get the current version")
 
-VERSION = "v0.3.2"
+VERSION = "v0.3.3"
 
 # ROI CREATION OPTIONS ====
 

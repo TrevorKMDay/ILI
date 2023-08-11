@@ -2,7 +2,9 @@
 
 # Seedmap wrapper works with MATLAB R2019a for some reason
 module purge
-module load python3 matlab/R2019a workbench/1.4.2
+module load python3 matlab/R2019a # workbench/1.5.0
+
+export PATH=/home/feczk001/shared/code/external/utilities/workbench/1.4.2/workbench/bin_rh_linux64:${PATH}
 
 projhome=/home/feczk001/day00096/ili_container
 
@@ -56,14 +58,17 @@ TR=0.8
 FD=0.2
 mat=${ses}/func/sub-NDARINV003RTV85_ses-baselineYear1Arm1_task-rest_desc-filtered_motion_mask.mat
 
-echo "Trying bare"
+# echo "Trying bare"
 
-python ${projhome}/Cifti_conn_matrix_to_corr_dt_pt/seed_map_wrapper.py \
-    -fd  ${FD}  \
-    -mre ${MRE} \
-    -m   ${mat} \
-    ${TR} ${dtseries} test.ptseries.nii 1
+# echo \
+# python ${projhome}/Cifti_conn_matrix_to_corr_dt_pt/seed_map_wrapper.py \
+#     -fd  ${FD}  \
+#     -mre ${MRE} \
+#     -m   ${mat} \
+#     -wb  $(which wb_command) \
+#     ${TR} ${dtseries} test.ptseries.nii 1
 
+# exit 
 
 echo -e "\n============"
 echo      "Trying concs"
