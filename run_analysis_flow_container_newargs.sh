@@ -14,7 +14,7 @@ ex_sub=sub-NDARINV003RTV85/ses-baselineYear1Arm1
 dtseries=func/sub-NDARINV003RTV85_ses-baselineYear1Arm1_task-rest_bold_desc-filtered_timeseries.dtseries.nii
 motion=func/sub-NDARINV003RTV85_ses-baselineYear1Arm1_task-rest_desc-filtered_motion_mask.mat
 
-ls -lrh ${ex_sub}/{${dtseries},${motion}} ; exit
+# ls -lrh ${ex_sub}/{${dtseries},${motion}} ; exit
 
 # Directory must exist to be mounted
 mkdir -p container_output/
