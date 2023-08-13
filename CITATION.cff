@@ -1,0 +1,26 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: Crossotope
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Trevor Kincaid McAllister
+    family-names: Day
+    email: day00096@umn.edu
+    affiliation: University of Minnesota
+    orcid: 'https://orcid.org/0000-0003-2911-8312'
+repository-code: 'https://github.com/TrevorKMDay/crossotope_mapping'
+repository: >-
+  https://gitlab.com/Fair_lab/Cifti_conn_matrix_to_corr_dt_pt
+abstract: >-
+  Code to calculate laterality of resting-state correlations
+  from a ROI. Contains code to generate necessary ROI inputs
+  and calculate laterality of resulting seedmaps. 
+keywords:
+  - fMRI
+  - rsfMRI
+license: CC-BY-4.0
