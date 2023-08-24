@@ -50,10 +50,17 @@ remaining_seconds <- the_dat[[8]][1, 1]
 remaining_mean_FD <- the_dat[[9]][1, 1]
 
 if (is.na(param)) {
-  message(paste("TR:                    ", TR))
-  message(paste("Remaining frames:      ", remaining_frames))
-  message(paste("Remaining seconds:     ", remaining_seconds))
-  message(paste("FD of remaining frames:", round(remaining_mean_FD, 3)))
+
+  # message(paste("TR:                    ", TR))
+  # message(paste("Remaining frames:      ", remaining_frames))
+  # message(paste("Remaining seconds:     ", remaining_seconds))
+  # message(paste("FD of remaining frames:", round(remaining_mean_FD, 3)))
+
+  message("TR, frames, seconds, mean FD")
+  cat(paste(TR, remaining_frames, remaining_seconds, remaining_mean_FD,
+            sep = ", "),
+      fill = TRUE)
+
 } else {
 
   if (param %in% c(1, "TR")) {
@@ -65,7 +72,7 @@ if (is.na(param)) {
   } else if (param %in% c(4, "FD")) {
     message(round(remaining_mean_FD, 2))
   } else {
-    stop(paste("Uncrecognized parameter:", param))
+    stop("Unrecognized parameter")
   }
 
 }
