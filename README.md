@@ -4,12 +4,25 @@ Trevor Day // day00096@umn.edu
 
 Code to create the Singularity container for ILI ROI creation and processing.
 
+The steps are to:
+
+ 1. `roi`: Create the mixed ROIs for a given source ROI.
+ 2. `analysis`: For each of those mixed ROIs, create a seedmap and calculate
+      its laterality.
+ 3. `ili`: From the results of `analysis`, calculate the ILI for all available
+      results.
+
 ## Setup
 
 This repository relies on a second repository as a submodule. When cloning for
 the first time, run the following code (see this [StackOverflow answer][1]).
 
     git submodule update --recursive --remote
+
+Pulling the container from GitHub requires [Git LFS][4]. Install it and then
+
+    git fetch crossotope.sif
+    git checkout
 
 ## Running ROI creation
 
@@ -60,16 +73,20 @@ The analysis works best using _derivatives_ from the DCAN Labs
 
 The analysis flow requires a lot more bind points. From top to bottom:
 
- 1. The session-level directory containing the `dtseries`, `midthickness`, and
+ 1. The session-level directory containing the `dtseries`, and
        motion `.mat` file. (TO DO: Use no `.mat` file).
  2. The ROIs created using the ROI flow above.
  3. The Matlab runtime. `R2019a` is known to work with this code.
  4. The JSON configuration file for the analysis parameters (see below).
  5. The directory to save the output CSV to. One CSV per session.
 
+Additionally, the `midthickness` files must be including if smoothing is
+enabled.
+
 The options to the container itself are more self-explanatory.
 
- - The `--session` option requires all four files as arguments.
+ - The positional arguments are the input `dtseries` file and its associated
+    motion `.mat` file.
  - `--roi_dir` takes the path to the ROIs and figures out how many there are.
  - `--n_samples` is how many ROIs to use (e.g. if the ROI is 500 greyordinates,
        you don't have to use them all). The default value is 100.
@@ -77,27 +94,27 @@ The options to the container itself are more self-explanatory.
        container.
  - The path to the Matlab runtime (`--MRE`).
  - The path to the JSON config file, which should be bound to the container
-       (`--json_config`.)
+       (`--json_config`).
  - Finally, the `--label` is prepended to the results, e.g.
        `foobar_results.csv`.
 
-      MRE=${path_to_MRE}/MATLAB_Runtime_R2019a_update9/v96/
+    MRE=${path_to_MRE}/MATLAB_Runtime_R2019a_update9/v96/
 
-      singularity run \
-            -B ${ex_sub}/:/session/            \
-            -B container_rois/:/input_rois/    \
-            -B ${MRE}:/matlab/                 \
-            -B config.json:/config.json        \
-            -B container_output:/output/       \
-            my_img.sif analysis                \
-                  --session                    \
-                        /session/{${dtseries},${lmidthick},${rmidthick},${motion}} \
-                  --roi_dir       /input_rois        \
-                  --n_samples     100                \
-                  --matlab        "$(which matlab)"  \
-                  --MRE           /matlab            \
-                  --json_config   /config.json       \
-                  --label         foobar
+    singularity run \
+        -B ${ex_sub}/:/session/            \
+        -B container_rois/:/input_rois/    \
+        -B ${MRE}:/matlab/                 \
+        -B config.json:/config.json        \
+        -B container_output:/output/       \
+        my_img.sif analysis                \
+            --roi_dir       /input_rois         \
+            --n_samples     100                 \
+            --matlab        "$(which matlab)"   \
+            --MRE           /matlab             \
+            --json_config   /config.json        \
+            --label         foobar              \
+            /session/${dtseries}                \
+            /session/${motion}
 
 ### Config file
 
@@ -159,6 +176,22 @@ On [MSI](https://www.msi.umn.edu/)
        With 56 GB RAM: 20 minutes for 100 samples (12 s/ROI or 5 samples per
        minute).
 
+## ILI creation
+
+The `analysis` step above creates one CSV per session with the actual L/R
+values for possible futher computation. The subcommand `ili` takes a
+single-level directory of `n` CSVs and returns a single CSV with `n` non-header
+rows with the name of the file and the computed ILI value.
+
+    singularity run crossotope.sif ili input_dir output.csv
+
+## Acknowledgements
+
+ - Seed map wrapper development: Robert Hermosillo, Greg Conan
+ - Testing and development: Maryam Mahmoudi
+
 [1]: https://stackoverflow.com/questions/1030169/pull-latest-changes-for-all-git-submodules
 
 [2]: https://github.com/DCAN-Labs/abcd-hcp-pipeline
+
+[4]: https://git-lfs.com/

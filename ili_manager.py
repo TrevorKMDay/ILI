@@ -171,6 +171,14 @@ if args.command == "analysis":
 
 # Declare functions
 
+def write_csv(df, csv_file):
+
+    # Write to CSV without index column and then remove '#' from header row
+    df.to_csv(csv_file, index=False)
+
+    print(f"{csv_file} saved!")
+
+
 def create_rois(input_roi, n, prefix):
 
     print("\n=== Running ROI flow ... ===")
@@ -465,8 +473,8 @@ def calculate_ILI(directory, output_file):
     df = pd.DataFrame(results)
     df.columns = ["file", "ILI"]
 
-    df.to_csv(output_file)
-    print(f"{output_file} saved!")
+    # My custom CSV wrapper
+    write_csv(df, output_file)
 
 # RUN
 
@@ -506,7 +514,7 @@ elif args.command == "analysis":
     print(results)
 
     np.savetxt(f"/output/{args.label}_results.csv", results, delimiter=",",
-               fmt="%s", header="nrh,ix,L,R")
+               fmt="%s", header="nrh,ix,L,R", comments="")
 
 elif args.command == "ili":
 
