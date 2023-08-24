@@ -19,10 +19,11 @@ the first time, run the following code (see this [StackOverflow answer][1]).
 
     git submodule update --recursive --remote
 
-Pulling the container from GitHub requires [Git LFS][4]. Install it and then
+The container itself requires [Git Large File Storage][3].
+To get the `.sif` file:
 
-    git fetch crossotope.sif
-    git checkout
+    git lfs fetch
+    git lfs checkout
 
 ## Running ROI creation
 
@@ -34,14 +35,15 @@ The directory containing the ROI gets bound to `/roi` and the outputs to
 with `--input_roi`. The output directory does not.
 
     roi_name=example.dscalar.nii
-    roi_dir=container_rois
+    roi_outputs=container_rois
 
-    rm -rf ${roi_dir}
-    mkdir -p ${roi_dir}
+    # This is done to make sure too many ROIs aren't created
+    rm -rf ${roi_outputs}
+    mkdir -p ${roi_outputs}
 
     singularity run                         \
         -B data/example_roi/:/roi           \
-        -B ${roi_dir}:/roi_outputs          \
+        -B ${roi_outputs}:/roi_outputs      \
         my_img.sif roi                      \
             --input_roi /roi/${roi_name}    \
             -n 10
@@ -50,7 +52,7 @@ The ROI creation:
 
  1. Creates a mirror of your input on the right hemisphere. (Needs update to
         start in the right hemisphere.)
- 1. Generates `n` different `dscalars` for each value of `nrh` between 0 and
+ 1. Generates `n` different `dscalars` for each value of `nrh` between 1 and
         the total size of your ROI. So if you ask for `-n 10` repeats of a
         100-greyordinate ROI,  you will create 100 ROIs.
  2. The `dscalars` are mapped onto `dlabel` files (in `fsLR32k` space: needs
@@ -61,10 +63,10 @@ The ROI creation:
 
 ### ROI tree
 
-      ili_manager.py
-       |- rois_create_mirror.sh
-       |- rois_permute_ROI.R
-       |- rois_dscalar_to_surface.sh
+    ili_manager.py
+        |- rois_create_mirror.sh
+        |- rois_permute_ROI.R
+        |- rois_dscalar_to_surface.sh
 
 ## Running analysis
 
@@ -118,8 +120,9 @@ The options to the container itself are more self-explanatory.
 
 ### Config file
 
-To make it the command line options simpler to use, the options to the
-seedmap wrapper are included in a configuration JSON file, e.g.
+All options regarding the processing itself (e.g. motion limits, minute limits)
+are included in a configuration JSON file, see below. This also makes the
+CLI options less overwhelming to navigate.
 
     {
         # Values for seedmap wrapper
@@ -144,8 +147,28 @@ seedmap wrapper are included in a configuration JSON file, e.g.
                                             #   (mm^2)
     }
 
-Default values are those listed in example above. FYI no comments in actual
-JSON files.
+Default values are those listed in example above. NB: You can't include
+comments in actual JSON files.
+
+### Example usage:
+
+    MRE=${path_to_MRE}/MATLAB_Runtime_R2019a_update9/v96/
+
+    singularity run \
+        -B ${ex_sub}/:/session/            \
+        -B container_rois/:/input_rois/    \
+        -B ${MRE}:/matlab/                 \
+        -B config.json:/config.json        \
+        -B container_output:/output/       \
+        my_img.sif analysis                \
+            --roi_dir       /input_rois         \
+            --n_samples     100                 \
+            --matlab        "$(which matlab)"   \
+            --MRE           /matlab             \
+            --json_config   /config.json        \
+            --label         foobar              \
+            /session/${dtseries}                \
+            /session/${motion}
 
 #### Minutes
 
@@ -160,10 +183,12 @@ Currently, the no-transformation option isn't complete. Keep it set to 1.
 
 ### Analysis tree
 
-      ili_manager.py
-      |- analysis-run_seedmap.sh
+    ili_manager.py
+        |- analysis-run_seedmap.sh
             |- seedmap_wrapper.py
-      |- analysis-cluster.sh
+                |- Cifti_conn_matrix_to_corr_dt_pt
+                |- MATLAB
+        |- analysis-cluster.sh
 
 ## Benchmarks
 
@@ -176,7 +201,7 @@ On [MSI](https://www.msi.umn.edu/)
        With 56 GB RAM: 20 minutes for 100 samples (12 s/ROI or 5 samples per
        minute).
 
-## ILI creation
+## ILI Calculation
 
 The `analysis` step above creates one CSV per session with the actual L/R
 values for possible futher computation. The subcommand `ili` takes a
@@ -185,13 +210,32 @@ rows with the name of the file and the computed ILI value.
 
     singularity run crossotope.sif ili input_dir output.csv
 
+## Extracting FD
+
+The motion exclusion results for every framewise displacement (FD)
+threshold between 0.0 and 0.5 mm (in steps of 0.01 mm)
+are provided in the ABCD HCP pipeline `.mat` files. This makes it easy to extract the amount of
+data that were used in each analysis post hoc.
+
+The command below extracts from a single `.mat` file and FD threshold the following values:
+TR (in seconds), frames remaining, seconds remaining (i.e. TR times frames remaining), and the
+mean FD of the remaining frames.
+
+    singularity run crossotope.sif fd [mat file] [fd]
+
+This code should be run on a list of `.mat` files. Future versions will incorporate output of FD
+statistics as part of `analysis`, but hasn't been integrated yet.
+
 ## Acknowledgements
 
  - Seed map wrapper development: Robert Hermosillo, Greg Conan
  - Testing and development: Maryam Mahmoudi
 
+
+
 [1]: https://stackoverflow.com/questions/1030169/pull-latest-changes-for-all-git-submodules
 
 [2]: https://github.com/DCAN-Labs/abcd-hcp-pipeline
 
-[4]: https://git-lfs.com/
+[3]: https://git-lfs.com
+

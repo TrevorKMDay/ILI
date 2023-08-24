@@ -36,6 +36,10 @@ ps_roi = subparsers.add_parser("roi", help="1. Create ROIs")
 ps_analysis = subparsers.add_parser("analysis", help="2. Analyze session")
 ps_ili = subparsers.add_parser("ili",
                                help="3. Calculate ILI from analysis CSV files")
+ps_fd = subparsers.add_parser("fd", help="Extract FD values from .mat file.")
+ps_version = subparsers.add_parser("version", help="Get the current version")
+
+VERSION = "v0.3.2"
 
 # ROI CREATION OPTIONS ====
 
@@ -123,6 +127,15 @@ ps_ili.add_argument(dest="ili_directory",
 ps_ili.add_argument(dest="ili_output",
                     help="CSV file to save ILI values to.")
 
+# FD options ======
+
+ps_fd.add_argument(dest="mat_file",
+                   help=".mat motion file to extract params from")
+
+ps_fd.add_argument(dest="FD",
+                   default=0.2,
+                   help="FD thresh to use: 0.0 to 0.5 in steps of 0.01")
+
 # SHARED OPTIONS
 
 parser.add_argument("--cwd", dest="cwd",
@@ -132,7 +145,7 @@ parser.add_argument("--cwd", dest="cwd",
 
 args = parser.parse_args()
 
-print(args)
+# print(args)
 
 # If no subcommand given, give help.
 if not args.command:
@@ -276,17 +289,11 @@ def analyze_session(dtseries_file, motion_file,
         motion_file = os.path.realpath(motion_file)
         print(f"Motion file is:\n\t{motion_file}")
 
-        # Extract important pieces of info from mat file and save
-        data_info = sp.run(["Rscript", f"{args.cwd}/bin/fd_extraction.R",
-                            motion_file, str(config["fd_threshold"])],
-                           check=True,
-                           stdout=sp.PIPE, stderr=sp.STDOUT,
-                           universal_newlines=True)
+        sp.run(["Rscript", "{args.cwd}/bin/fd_extraction.R", motion_file,
+                config["fd_threshold"]],
+               stdout="/output/data_info.txt")
 
-        data_info_file = "/output/data_info.txt"
-        print(data_info.stdout)
-        with open(data_info_file, "w") as f:
-            f.write(data_info.stdout)
+        exit()
 
     elif motion_file == "NONE":
         motion_file = "NONE"
@@ -375,12 +382,6 @@ def analyze_session(dtseries_file, motion_file,
 
     for n, nrh, ix, files in ROIs:
 
-        # Check that ROI files were found
-        if len(files) != 2:
-            print(f"Did not find exactly two ROI files for nrh {nrh}, ix {ix}")
-            print("Found: ")
-            print(files_to_use)
-
         if "_L.label.gii" in files[0]:
             l_roi_file = os.path.realpath(files[0])
             r_roi_file = os.path.realpath(files[1])
@@ -449,9 +450,11 @@ def analyze_session(dtseries_file, motion_file,
 
 def calculate_ILI(directory, output_file):
 
+    # Find all files in directory
     files = [f for f in os.listdir(directory)
              if os.path.isfile(os.path.join(directory, f))]
 
+    # Reduce to CSV files
     csv_files = [os.path.join(directory, f) for f in files if ".csv" in f]
 
     print(f"Found {len(csv_files)} CSV files")
@@ -490,9 +493,27 @@ if args.command == "roi" or args.command == "analysis":
     else:
         print(f"wb_command path is:\n\t{wb_command}")
 
+
+def extract_fd(mat_file, fd):
+
+    fd_results = sp.run(["Rscript", f"{args.cwd}/bin/fd_extraction.R",
+                         mat_file, fd],
+                        check=True,
+                        stdout=sp.PIPE, stderr=sp.DEVNULL,
+                        universal_newlines=True)
+
+    fd_results_str = fd_results.stdout.rstrip()
+
+    print(f"{mat_file}, {fd}, {fd_results_str}")
+
 # MAIN EXECUTION ===
 
-if args.command == "roi":
+
+if args.command == "version":
+
+    print(f"Version: {VERSION}")
+
+elif args.command == "roi":
 
     create_rois(args.input_roi, args.n, args.roi_prefix)
 
@@ -519,3 +540,7 @@ elif args.command == "analysis":
 elif args.command == "ili":
 
     calculate_ILI(args.ili_directory, args.ili_output)
+
+elif args.command == "fd":
+
+    extract_fd(args.mat_file, args.FD)
