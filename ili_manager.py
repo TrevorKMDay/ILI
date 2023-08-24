@@ -35,6 +35,7 @@ subparsers = parser.add_subparsers(dest="command")
 ps_roi = subparsers.add_parser("roi", help="1. Create ROIs")
 ps_analysis = subparsers.add_parser("analysis", help="2. Analyze session")
 ps_ili = subparsers.add_parser("ili", help="3. Calculate ILI from analysis CSV files")
+ps_fd = subparsers.add_parser("fd", help="Extract FD values from .mat file.")
 
 # ROI CREATION OPTIONS ====
 
@@ -122,6 +123,15 @@ ps_ili.add_argument(dest="ili_directory",
 ps_ili.add_argument(dest="ili_output",
                     help="CSV file to save ILI values to.")
 
+# FD options ======
+
+ps_fd.add_argument(dest="mat_file",
+                    help=".mat motion file to extract params from")
+
+ps_fd.add_argument(dest="FD",
+                    default=0.2,
+                    help="FD thresh to use: 0.0 to 0.5 in steps of 0.01")
+
 # SHARED OPTIONS
 
 parser.add_argument("--cwd", dest="cwd",
@@ -131,7 +141,7 @@ parser.add_argument("--cwd", dest="cwd",
 
 args = parser.parse_args()
 
-print(args)
+# print(args)
 
 # If no subcommand given, give help.
 if not args.command:
@@ -467,6 +477,17 @@ if args.command == "roi" or args.command == "analysis":
     else:
         print(f"wb_command path is:\n\t{wb_command}")
 
+def extract_fd(mat_file, fd):
+
+    fd_results = sp.run(["Rscript", f"{args.cwd}/bin/fd_extraction.R", mat_file, fd],
+                         check=True,
+                         stdout=sp.PIPE, stderr=sp.DEVNULL,
+                         universal_newlines=True)
+
+    fd_results_str = fd_results.stdout.rstrip()
+
+    print(f"{mat_file}, {fd}, {fd_results_str}")
+
 # MAIN EXECUTION ===
 
 if args.command == "roi":
@@ -496,3 +517,7 @@ elif args.command == "analysis":
 elif args.command == "ili":
 
     calculate_ILI(args.ili_directory, args.ili_output)
+
+elif args.command == "fd":
+
+    extract_fd(args.mat_file, args.FD)

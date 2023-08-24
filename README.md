@@ -11,6 +11,11 @@ the first time, run the following code (see this [StackOverflow answer][1]).
 
     git submodule update --recursive --remote
 
+The container itself requires [Git Large File Storage][3]. To get the `.sif` file:
+
+    git lfs fetch
+    git lfs checkout
+
 ## Running ROI creation
 
 The container requires two bind points: the input ROI and the location to save
@@ -159,6 +164,28 @@ On [MSI](https://www.msi.umn.edu/)
        With 56 GB RAM: 20 minutes for 100 samples (12 s/ROI or 5 samples per
        minute).
 
+## Running ILI calculation
+
+## Extracting FD 
+
+The motion exclusion results for every framewise displacement (FD) 
+threshold between 0.0 and 0.5 mm (in steps of 0.01 mm)
+are provided in the ABCD HCP pipeline `.mat` files. This makes it easy to extract the amount of 
+data that were used in each analysis post hoc. 
+
+The command below extracts from a single `.mat` file and FD threshold the following values: 
+TR (in seconds), frames remaining, seconds remaining (i.e. TR times frames remaining), and the 
+mean FD of the remaining frames. 
+
+    singularity run crossotope.sif fd [mat file] [fd]
+
+This code should be run on a list of `.mat` files. Future versions will incorporate output of FD
+statistics as part of `analysis`, but hasn't been integrated yet. 
+
+
+
 [1]: https://stackoverflow.com/questions/1030169/pull-latest-changes-for-all-git-submodules
 
 [2]: https://github.com/DCAN-Labs/abcd-hcp-pipeline
+
+[3]: https://git-lfs.com
