@@ -10,6 +10,17 @@ else
     exit 1
 fi
 
+ver=$(grep "^ *VERSION" "${def}" | sed "s/^ *VERSION //")
+echo "Version is ${ver}"
+
+if grep -q "VERSION = \"${ver}\"" ili_manager.py ; then
+    echo "Version label OK, building ..."
+else
+    echo -n "Version label does not match in ili_manager.py, replacing and "
+    echo    "continuing to build."
+    sed -i "s/VERSION = .*/VERSION = \"${ver}\"/" ili_manager.py
+fi
+
 # --force overwrites current version
 singularity build \
     --fakeroot --fix-perms --force --writable-tmpfs \
