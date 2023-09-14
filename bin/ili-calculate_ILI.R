@@ -1,19 +1,25 @@
-the_file <- commandArgs(trailingOnly = TRUE)[1]
+# Get command-line arguments
+
+args <- commandArgs(trailingOnly = TRUE)
+the_file <- args[1]
+size <- args[2]
 
 # Declare function
 
-ILI_from_txt <- function(frame, size = NULL) {
+ILI_from_txt <- function(frame, size = NA) {
 
-# Ensure input contains correct columns
-if (!all(c("nrh", "LI") %in% colnames(frame)))
+  # Ensure input contains correct columns
+  if (!all(c("nrh", "LI") %in% colnames(frame)))
     stop("Input frame must contain columns nrh and LI!")
 
   # Get size if necessary
-  if (is.null(size)) {
+  if (is.na(size)) {
     size <- max(frame$nrh)
-    message(paste0("Setting size for ", the_file,
-                   " to max(nrh) [", size,
+    message(paste0("Setting size for ", the_file, " to max(nrh) [", size,
                    "] - this is imprecise."))
+  } else {
+    size <- as.numeric(size)
+    message(paste0("Max size for ", the_file, " is ", size))
   }
 
   # Do analysis
@@ -45,6 +51,6 @@ frame <- read.csv(the_file)
 frame$LI <-(frame$L - frame$R) / (frame$L + frame$R)
 
 # Estimate, guessing at size from data
-ili1 <- ILI_from_txt(frame)
+ili1 <- ILI_from_txt(frame, size)
 
 cat(ili1, fill = TRUE)

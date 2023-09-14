@@ -94,7 +94,7 @@ ps_analysis.add_argument("-r", "--roi_dir", dest="roi_dir",
                          metavar="DIR", default="/input_rois/")
 
 # TO DO: Make this a positional argument
-ps_analysis.add_argument("-j", "--json_config", dest="config_file",
+ps_analysis.add_argument("-c", "--json_config", dest="config_file",
                          help="JSON file containing configuration for "
                               "seedmapper",
                          metavar="FILE", default="/config.json")
@@ -119,6 +119,7 @@ ps_analysis.add_argument("-M", "--matlab", dest="matlab",
                          metavar="FILE",
                          required=True)
 
+
 # ILI options =======
 
 ps_ili.add_argument(dest="ili_directory",
@@ -126,6 +127,10 @@ ps_ili.add_argument(dest="ili_directory",
 
 ps_ili.add_argument(dest="ili_output",
                     help="CSV file to save ILI values to.")
+
+ps_ili.add_argument("-s", "--sizes_file", dest="sizes_file",
+                    help="JSON containing max ROI sizes",
+                    metavar="JSON")
 
 # FD options ======
 
@@ -180,6 +185,16 @@ if args.command == "analysis":
             print("   ERROR: --midthickness must be supplied if smoothing"
                   " kernel is >0.")
             sys.exit(1)
+
+if args.command == "ili":
+
+    if args.sizes_file is None:
+        print("WARNING: Supplying a sizes_file is highly recommended!\n")
+        sizes = None
+    else:
+        sizes = json.load(open(args.sizes_file))
+        print(f"INFO: Found a file with sizes for {len(sizes)} ROIs\n")
+        # pp.pprint(sizes)
 
 
 # Declare functions
@@ -461,14 +476,23 @@ def calculate_ILI(directory, output_file):
 
     results = []
 
-    for i, csv in enumerate(csv_files):
+    for csv in csv_files:
 
-        ILI = sp.run(["Rscript", "bin/ili-calculate_ILI.R", csv],
-                     stdout=sp.PIPE)
+        # Get size of ROI by identifying ROI from the filename and looking it
+        #   up. If it doesn't exist, assign None
+        csv_basename = os.path.basename(csv).replace("_results.csv", "")
+        if sizes is not None and csv_basename in sizes.keys():
+            size = sizes[csv_basename]
+            # print(f"{csv_basename}: {size}")
+            ILI = sp.run(["Rscript", "bin/ili-calculate_ILI.R", csv,
+                          str(size)],
+                         stdout=sp.PIPE)
+        else:
+            ILI = sp.run(["Rscript", "bin/ili-calculate_ILI.R", csv],
+                         stdout=sp.PIPE)
 
         # Clean up file name
-        shortname = os.path.basename(csv)
-        shortname = str.replace(shortname, ".csv", "")
+        shortname = str.replace(os.path.basename(csv), ".csv", "")
 
         # Build up dataframe
         results.append([shortname, float(ILI.stdout)])
