@@ -194,7 +194,7 @@ run_and_z () {
         python3 ${seed_map_wrapper}                         \
             --mre-dir       ${mre}                          \
             --wb_command    ${wb_command}                   \
-            --source        $(dirname ${seed_map_wrapper})  \
+            --source        $(dirname "${seed_map_wrapper}") \
             --fd-threshold  ${FD}                           \
             --left          ${lmt_conc}                     \
             --right         ${rmt_conc}                     \

@@ -119,6 +119,8 @@ ps_analysis.add_argument("-M", "--matlab", dest="matlab",
                          metavar="FILE",
                          required=True)
 
+ps_analysis.add_argument("--halfway_only", dest="halfway_only",
+                         action="store_true")
 
 # ILI options =======
 
@@ -185,6 +187,11 @@ if args.command == "analysis":
             print("   ERROR: --midthickness must be supplied if smoothing"
                   " kernel is >0.")
             sys.exit(1)
+
+    if args.halfway_only:
+        n_samples = 1
+    else:
+        n_samples = args.n
 
 if args.command == "ili":
 
@@ -264,7 +271,8 @@ def create_rois(input_roi, n, prefix):
 
 def analyze_session(dtseries_file, motion_file,
                     roi_dir, n, config, matlab, mre_dir,
-                    l_midthick_file=None, r_midthick_file=None):
+                    l_midthick_file=None, r_midthick_file=None,
+                    halfway=False):
 
     """
     Given a session, create the table of LI per seed laterality
@@ -361,9 +369,16 @@ def analyze_session(dtseries_file, motion_file,
 
         print(f"Found {size} ROIs with {indices} copies each.")
 
-        # Select n ratios from those available
-        sizes_to_use = random.sample(list(range(1, size + 1)), n)
-        sizes_to_use.sort()
+        if not halfway:
+
+            # Select n ratios from those available
+            sizes_to_use = random.sample(list(range(1, size + 1)), n)
+            sizes_to_use.sort()
+
+        else:
+            sizes_to_use = list(range(round(size / 2), round(size / 2) + 1))
+
+        print(f"Using sizes {sizes_to_use}")
 
         # For each size selected, choose an index to use for that ROI
         indices_to_use = [int(random.uniform(1, indices)) for i in
@@ -381,8 +396,7 @@ def analyze_session(dtseries_file, motion_file,
                         for nrh, ix in ROIs_to_use_str]
 
         # Store numeric values, file destination
-        ROIs = zip(range(0, n), sizes_to_use, indices_to_use,
-                   files_to_use)
+        ROIs = zip(range(0, n), sizes_to_use, indices_to_use, files_to_use)
 
         # print([n, len(sizes_to_use), len(indices_to_use), len(files_to_use),
         #        len(list(ROIs))])
@@ -551,10 +565,11 @@ elif args.command == "analysis":
         r_midthick_file = args.midthickness[1]
 
     results = analyze_session(args.dtseries_file, args.motion_file,
-                              args.roi_dir, args.n,
+                              args.roi_dir, n_samples,
                               config, args.matlab, args.mre_dir,
                               l_midthick_file=l_midthick_file,
-                              r_midthick_file=r_midthick_file)
+                              r_midthick_file=r_midthick_file,
+                              halfway=args.halfway_only)
 
     print(results)
 
