@@ -304,11 +304,11 @@ def analyze_session(dtseries_file, motion_file,
         motion_file = os.path.realpath(motion_file)
         print(f"Motion file is:\n\t{motion_file}")
 
-        sp.run(["Rscript", "{args.cwd}/bin/fd_extraction.R", motion_file,
-                config["fd_threshold"]],
-               stdout="/output/data_info.txt")
+        # sp.run(["Rscript", "{args.cwd}/bin/fd_extraction.R", motion_file,
+        #         config["fd_threshold"]],
+        #        stdout="/output/data_info.txt")
 
-        exit()
+        # exit()
 
     elif motion_file == "NONE":
         motion_file = "NONE"
