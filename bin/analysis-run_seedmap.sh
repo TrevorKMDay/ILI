@@ -22,6 +22,7 @@ SK=${11}
 rm_OUTLIER=${12}
 minutes=${13}
 z_transform=${14}
+tempdir=${15}
 
 # The seedmap wrapper is consistently located in this place relative to this
 #   file.
@@ -37,9 +38,9 @@ export MCR_CACHE_ROOT
 # Run seedmap
 
 # Work in /tmp to make container work
-tempdir=/tmp/seedmap_dir_${nrh}
+# tempdir=/tmp/${label}_seedmap_dir_${nrh}
 # Create output directory and exit if unsuccessful
-mkdir -p "${tempdir}" || (echo "Unable to create tempdir ${tempdir}" && exit 1)
+# mkdir -p "${tempdir}" || (echo "Unable to create tempdir ${tempdir}" && exit 1)
 
 echolog(){
     file=${tempdir}/info.txt
@@ -221,9 +222,12 @@ run_and_z () {
         exit 1
     fi
 
-    new_file="${file_created//_ROI/_roi-}"
+    # Rename output of MATLAB code to more closely align to BIDS naming
+    #   standards
+    new_file_bn="$(basename "${file_created}" | sed 's/_ROI/_roi-/')"
+    new_file="${tempdir}/${new_file_bn}"
     mv "${file_created}" "${new_file}"
-    echo "Created:  ${new_file}"
+    echo "Created: ${new_file}"
     echo
 
     if [ "${z_transform}" == 1 ] ; then

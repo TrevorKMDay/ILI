@@ -1,4 +1,5 @@
 #!/bin/bash
+
 set -e
 
 input_dir=${1}
@@ -14,13 +15,13 @@ echo "SA threshold:    ${SURF_AREA_THRESH}"
 ex_surf=$(dirname "${0}")/../data/example_sub/sub-example_hemi
 
 # Find input directory and extract sub label
-file=$(find "${input_dir}/seedmaps/" -name "*_roi-1_Z.dscalar.nii")
+file=$(find "${input_dir}/" -name "*_roi-1_Z.dscalar.nii")
 
 if [ "${file}" == "" ] ; then
-    echo "ERROR: Can't find Z transformed dscalar in ${input_dir}/seedmaps/"
+    echo "ERROR: Can't find Z transformed dscalar in ${input_dir}/"
     echo "  Pattern: *_roi-1_Z.dscalar.nii"
     echo "${file}"
-    exit 1
+    exit 11
 else
     echo "Found file ${file}"
 fi
