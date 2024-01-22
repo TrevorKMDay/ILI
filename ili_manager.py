@@ -40,7 +40,7 @@ ps_ili = subparsers.add_parser("ili",
 ps_fd = subparsers.add_parser("fd", help="Extract FD values from .mat file.")
 ps_version = subparsers.add_parser("version", help="Get the current version")
 
-VERSION = "v0.3.3"
+VERSION = "v0.4.0"
 
 # ROI CREATION OPTIONS ====
 

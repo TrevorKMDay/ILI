@@ -215,7 +215,8 @@ run_and_z () {
     ${cmd}
 
     # Check to see if a file was created with the appropriate name
-    file_created=$(find "${tempdir}" -name "*_ROI1.dscalar.nii")
+    #   Include "minutes" to check that
+    file_created=$(find "${tempdir}" -name "*minutes*_ROI1.dscalar.nii")
 
     if [ "${file_created}" == "" ] ; then
         echo "Output from seedmap not created, exiting"
