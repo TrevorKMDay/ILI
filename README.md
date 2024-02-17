@@ -100,6 +100,8 @@ The options to the container itself are more self-explanatory.
  - Finally, the `--label` is prepended to the results, e.g.
        `foobar_results.csv`.
 
+Example code:
+
     MRE=${path_to_MRE}/MATLAB_Runtime_R2019a_update9/v96/
 
     singularity run \
@@ -210,12 +212,24 @@ rows with the name of the file and the computed ILI value.
 
     singularity run crossotope.sif ili input_dir output.csv
 
+The maximum size of each ROI will be estimated by the largest value in the
+results. Technically, `n` values are sampled between `{1..size}`, which means
+this doesn't affect the values materially, especially for `n` in the hundreds.
+
+You can suppy a JSON file with the max size of each ROI, that takes the simple
+format:
+
+    {
+        "roi1": 100,
+        "roi2": 150
+    }
+
 ## Extracting FD
 
 The motion exclusion results for every framewise displacement (FD)
 threshold between 0.0 and 0.5 mm (in steps of 0.01 mm)
-are provided in the ABCD HCP pipeline `.mat` files. This makes it easy to extract the amount of
-data that were used in each analysis post hoc.
+are provided in the ABCD HCP pipeline `.mat` files. This makes it easy to
+extract the amount of data that were used in each analysis post hoc.
 
 The command below extracts from a single `.mat` file and FD threshold the following values:
 TR (in seconds), frames remaining, seconds remaining (i.e. TR times frames remaining), and the

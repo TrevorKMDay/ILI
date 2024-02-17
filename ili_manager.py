@@ -38,9 +38,10 @@ ps_analysis = subparsers.add_parser("analysis", help="2. Analyze session")
 ps_ili = subparsers.add_parser("ili",
                                help="3. Calculate ILI from analysis CSV files")
 ps_fd = subparsers.add_parser("fd", help="Extract FD values from .mat file.")
+ps_config = subparsers.add_parser("config", help="Create basic config file.")
 ps_version = subparsers.add_parser("version", help="Get the current version")
 
-VERSION = "v0.4.0"
+VERSION = "v0.5.1"
 
 # ROI CREATION OPTIONS ====
 
@@ -143,6 +144,11 @@ ps_fd.add_argument(dest="mat_file",
 ps_fd.add_argument(dest="FD",
                    default=0.2,
                    help="FD thresh to use: 0.0 to 0.5 in steps of 0.01")
+
+# Config options
+
+ps_config.add_argument(dest="out",
+                       help=".json file to save to")
 
 # SHARED OPTIONS
 
@@ -446,20 +452,26 @@ def analyze_session(dtseries_file, motion_file,
             #   10: FD; 11: smoothing kernel; 12: rm outliers?; 13: minutes;
             #   12: Z-transformation?
             # Note: sp.run seems to require all args to be strings
-            sp.run([f"{args.cwd}/bin/analysis-run_seedmap.sh",
-                    nrh_zpad,
-                    matlab, mre_dir,
-                    l_roi_file, r_roi_file,
-                    dtseries,
-                    str(l_midthick_file), str(r_midthick_file),
-                    motion_file,
-                    str(config['fd_threshold']),
-                    str(config['smoothing_kernel']),
-                    str(config['remove_outliers_yn']),
-                    str(config['max_minutes']),
-                    str(config['z_transform_yn']),
-                    temp_dir_name],
-                   check=True)
+            p = sp.run([f"{args.cwd}/bin/analysis-run_seedmap.sh",
+                        nrh_zpad,
+                        matlab, mre_dir,
+                        l_roi_file, r_roi_file,
+                        dtseries,
+                        str(l_midthick_file), str(r_midthick_file),
+                        motion_file,
+                        str(config['fd_threshold']),
+                        str(config['smoothing_kernel']),
+                        str(config['remove_outliers_yn']),
+                        str(config['max_minutes']),
+                        str(config['z_transform_yn']),
+                        temp_dir_name],
+                       check=False)
+
+            seedmap_rc = p.returncode
+            if seedmap_rc == 100:
+                print("\nERROR: Insufficient minutes at"
+                      f"<{config['fd_threshold']} FD in this dtseries.\n")
+                sys.exit(100)
 
             print("Copying temp dir to home")
             sp.run(["ls", temp_dir_name])
@@ -510,15 +522,27 @@ def calculate_ILI(directory, output_file):
     for csv in csv_files:
 
         # Get size of ROI by identifying ROI from the filename and looking it
-        #   up. If it doesn't exist, assign None
-        csv_basename = os.path.basename(csv).replace("_results.csv", "")
-        if sizes is not None and csv_basename in sizes.keys():
-            size = sizes[csv_basename]
-            # print(f"{csv_basename}: {size}")
+        #   up.
+        # csv_basename = os.path.basename(csv).replace("_results.csv", "")
+
+        # Find `roi-foo`` label in filename, if not, fall back to automatic
+        #   detection.
+        if "roi-" in csv:
+            roi_label = re.search(r'roi-[^_]*', csv)
+            roi_name = roi_label.replace("roi-", "")
+        else:
+            print(f"Missing BIDS-like `roi-foo` in {csv}, cannot use this "
+                  "to find size. Size will be set automatically.")
+
+        if sizes is not None and roi_name in sizes.keys():
+            size = sizes[roi_name]
             ILI = sp.run(["Rscript", "bin/ili-calculate_ILI.R", csv,
                           str(size)],
                          stdout=sp.PIPE)
         else:
+            # If roi_name not found in json file, fall back
+            print(f"Size for roi {roi_name} was not found, falling back to "
+                  "automatic detection.")
             ILI = sp.run(["Rscript", "bin/ili-calculate_ILI.R", csv],
                          stdout=sp.PIPE)
 
@@ -600,3 +624,12 @@ elif args.command == "ili":
 elif args.command == "fd":
 
     extract_fd(args.mat_file, args.FD)
+
+elif args.command == "config":
+
+    config = {"fd_threshold": 0.2, "smoothing_kernel": 0, "max_minutes": 5,
+              "remove_outliers_yn": 1, "z_transform_yn": 1,
+              "cluster_surf_area_min": 10, "cluster_value_min": 0.4}
+
+    with open(args.out, "w") as f:
+        json.dump(config, f, indent=4)

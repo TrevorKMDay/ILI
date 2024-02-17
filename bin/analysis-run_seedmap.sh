@@ -40,7 +40,8 @@ export MCR_CACHE_ROOT
 # Work in /tmp to make container work
 # tempdir=/tmp/${label}_seedmap_dir_${nrh}
 # Create output directory and exit if unsuccessful
-# mkdir -p "${tempdir}" || (echo "Unable to create tempdir ${tempdir}" && exit 1)
+# mkdir -p "${tempdir}" || (echo "Unable to create tempdir ${tempdir}" &&
+#   exit 1)
 
 echolog(){
     file=${tempdir}/info.txt
@@ -220,7 +221,7 @@ run_and_z () {
 
     if [ "${file_created}" == "" ] ; then
         echo "Output from seedmap not created, exiting"
-        exit 1
+        exit 100
     fi
 
     # Rename output of MATLAB code to more closely align to BIDS naming
