@@ -530,6 +530,7 @@ def calculate_ILI(directory, output_file):
         if "roi-" in csv:
             roi_label = re.search(r'roi-[^_]*', csv)
             roi_name = roi_label.replace("roi-", "")
+
         else:
             print(f"Missing BIDS-like `roi-foo` in {csv}, cannot use this "
                   "to find size. Size will be set automatically.")
