@@ -3,7 +3,7 @@ From: centos:7
 
 %labels
     AUTHOR day00096@umn.edu
-    VERSION v0.5.1
+    VERSION v0.5.1-rocky8
 
 %files
     ./ili_manager.py                    /home
