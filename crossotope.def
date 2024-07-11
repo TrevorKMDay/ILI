@@ -1,5 +1,5 @@
 Bootstrap: docker
-From: centos:7
+From: rockylinux:8
 
 %labels
     AUTHOR day00096@umn.edu
@@ -45,8 +45,14 @@ From: centos:7
     # workbench dependencies
     yum install -y freetype.x86_64 mesa-libGL.x86_64
 
+    echo "YUM LIST"
+    yum list available | grep readline
+
     # R dependencies (openblas for R; libxml2, libpng for ciftiTools)
-    yum install -y openblas-devel libxml2-devel libpng-devel.x86_64 gcc.x86_64
+    yum config-manager --set-enabled powertools
+    yum install -y \
+        openblas-devel.x86_64 libxml2-devel libpng-devel.x86_64 \
+        gcc.x86_64 compat-libgfortran-48.x86_64 readline-devel.x86_64
 
     # matlab dependencies
     yum install -y libXcomposite.x86_64
