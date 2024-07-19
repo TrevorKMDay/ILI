@@ -1,0 +1,28 @@
+Bootstrap: docker
+# From: centos:7
+From: rockylinux:8
+
+%labels
+    AUTHOR day00096@umn.edu
+    VERSION v0.5.1
+
+# %files
+
+#     ./ili_manager.py                    /home
+#     ./bin                               /home
+#     # Workbench 1.4.2 copy
+#     ./workbench                         /home
+#     ./data                              /home
+#     # Seedmap wrapper embedded as git submodule
+#     ./Cifti_conn_matrix_to_corr_dt_pt   /home
+
+%post
+
+    # New way to install R on rocky8
+    yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+    yum config-manager --set-enabled powertools
+    yum install -y libxml2-devel R
+
+    # Install required R packages
+    repo="https://cloud.r-project.org/"
+    R -e "install.packages(c(\"RNifti\", \"ciftiTools\"), repo=\"${repo}\")"

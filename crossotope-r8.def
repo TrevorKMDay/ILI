@@ -1,5 +1,6 @@
 Bootstrap: docker
-From: centos:7
+# From: centos:7
+From: rockylinux:8
 
 %labels
     AUTHOR day00096@umn.edu
@@ -45,27 +46,22 @@ From: centos:7
     # workbench dependencies
     yum install -y freetype.x86_64 mesa-libGL.x86_64
 
-    # R dependencies (openblas for R; libxml2, libpng for ciftiTools)
-    yum install -y openblas-devel libxml2-devel libpng-devel.x86_64 gcc.x86_64
-
     # matlab dependencies
     yum install -y libXcomposite.x86_64
 
-    # # Download and install R 4.0.4
-    export R_VERSION=4.0.4
-    curl -O \
-        https://cdn.rstudio.com/r/centos-7/pkgs/R-${R_VERSION}-1-1.x86_64.rpm
-
-    yum install -y R-${R_VERSION}-1-1.x86_64.rpm
+    # New way to install R on rocky8
+    yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+    yum config-manager --set-enabled powertools
+    yum install -y libxml2-devel R
 
     ln -s /opt/R/${R_VERSION}/bin/R /usr/local/bin/R
     ln -s /opt/R/${R_VERSION}/bin/Rscript /usr/local/bin/Rscript
 
-    # # Install required R packages
-    repo="https://mirror.las.iastate.edu/CRAN"
+    # Install required R packages
+    repo="https://cloud.r-project.org/"
     R -e "install.packages(c(\"RNifti\", \"ciftiTools\"), repo=\"${repo}\")"
 
-    # # Fix permissions on workbench
+    # Fix permissions on workbench
     chmod -R o+rX /home/
 
 %environment

@@ -41,7 +41,7 @@ ps_fd = subparsers.add_parser("fd", help="Extract FD values from .mat file.")
 ps_config = subparsers.add_parser("config", help="Create basic config file.")
 ps_version = subparsers.add_parser("version", help="Get the current version")
 
-VERSION = "v0.5.1"
+VERSION = "v0.6.0"
 
 # ROI CREATION OPTIONS ====
 
