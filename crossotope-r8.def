@@ -11,6 +11,7 @@ From: rockylinux:8
     ./bin                               /home
     # Workbench 1.4.2 copy
     ./workbench                         /home
+    # ./workbench2                        /home/workbench
     ./data                              /home
     # Seedmap wrapper embedded as git submodule
     ./Cifti_conn_matrix_to_corr_dt_pt   /home
@@ -19,6 +20,7 @@ From: rockylinux:8
 
     yum install -y epel-release
     yum -y update
+    yum config-manager --set-enabled powertools
 
     # Main packages
     yum install -y which python3
@@ -44,14 +46,15 @@ From: rockylinux:8
     # make altinstall
 
     # workbench dependencies
-    yum install -y freetype.x86_64 mesa-libGL.x86_64
+    yum install -y freetype.x86_64 qt5-qtbase-devel.x86_64 \
+        mesa-libOSMesa-devel.x86_64 mesa-libGLU-devel.x86_64 \
+        libstdc++.x86_64 glibc.x86_64
 
     # matlab dependencies
     yum install -y libXcomposite.x86_64
 
     # New way to install R on rocky8
     yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
-    yum config-manager --set-enabled powertools
     yum install -y libxml2-devel R
 
     ln -s /opt/R/${R_VERSION}/bin/R /usr/local/bin/R

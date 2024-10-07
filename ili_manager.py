@@ -124,6 +124,9 @@ ps_analysis.add_argument("-M", "--matlab", dest="matlab",
 ps_analysis.add_argument("--halfway_only", dest="halfway_only",
                          action="store_true")
 
+ps_analysis.add_argument("--keep_temp_dir", dest="keep_temp_dir",
+                         action="store_true")
+
 # ILI options =======
 
 ps_ili.add_argument(dest="ili_directory",
@@ -279,7 +282,7 @@ def create_rois(input_roi, n, prefix):
 def analyze_session(dtseries_file, motion_file,
                     roi_dir, n, config, matlab, mre_dir,
                     l_midthick_file=None, r_midthick_file=None,
-                    halfway=False):
+                    halfway=False, keep_temp=False):
 
     """
     Given a session, create the table of LI per seed laterality
@@ -427,17 +430,18 @@ def analyze_session(dtseries_file, motion_file,
 
         # TO DO: Don't hardcode this width
         nrh_zpad = str(nrh).zfill(3)
+        label = args.label
 
         # Matlab function ciftiopen() seems to want to run "-cifti-convert
         #   -to-gifti-ext" writing the output to the working directory (/home).
         # This doesn't work in a container, so chdir to the filesystem /tmp
         os.chdir("/tmp/")
 
-        label = args.label
-
         # tf.TemporaryDirectory() creates the dir, but returns an object
         # - cast to name to pass to bash scripts
-        with tf.TemporaryDirectory(prefix=f"{label}-{nrh_zpad}-") as \
+
+        with tf.TemporaryDirectory(prefix=f"{label}-{nrh_zpad}-",
+                                   delete=not keep_temp) as \
                 temp_dir_name:
 
             # temp_dir_name = temp_dir.name
@@ -611,7 +615,8 @@ elif args.command == "analysis":
                               config, args.matlab, args.mre_dir,
                               l_midthick_file=l_midthick_file,
                               r_midthick_file=r_midthick_file,
-                              halfway=args.halfway_only)
+                              halfway=args.halfway_only,
+                              keep_temp=args.keep_temp_dir)
 
     print(results)
 
