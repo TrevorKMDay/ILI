@@ -580,7 +580,7 @@ if args.command == "roi" or args.command == "analysis":
 
 def extract_fd(mat_file, fd):
 
-    fd_results = sp.run(["Rscript", f"{args.cwd}/bin/fd_extraction.R",
+    fd_results = sp.run(["Rscript", f"{args.cwd}/bin/fd-fd_extraction.R",
                          mat_file, fd],
                         check=True,
                         stdout=sp.PIPE, stderr=sp.DEVNULL,
@@ -588,7 +588,8 @@ def extract_fd(mat_file, fd):
 
     fd_results_str = fd_results.stdout.rstrip()
 
-    print(f"{mat_file}, {fd}, {fd_results_str}")
+    print(f"{mat_file}, FD<{fd}mm")
+    print(f"{fd_results_str}")
 
 # MAIN EXECUTION ===
 
