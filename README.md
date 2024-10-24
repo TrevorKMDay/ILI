@@ -11,6 +11,11 @@ the first time, run the following code (see this [StackOverflow answer][1]).
 
     git submodule update --recursive --remote
 
+The container itself requires [Git Large File Storage][3]. To get the `.sif` file:
+
+    git lfs fetch
+    git lfs checkout
+
 ## Running ROI creation
 
 The container requires two bind points: the input ROI and the location to save
@@ -21,14 +26,15 @@ The directory containing the ROI gets bound to `/roi` and the outputs to
 with `--input_roi`. The output directory does not.
 
     roi_name=example.dscalar.nii
-    roi_dir=container_rois
+    roi_outputs=container_rois
 
-    rm -rf ${roi_dir}
-    mkdir -p ${roi_dir}
+    # This is done to make sure too many ROIs aren't created
+    rm -rf ${roi_outputs}
+    mkdir -p ${roi_outputs}
 
     singularity run                         \
         -B data/example_roi/:/roi           \
-        -B ${roi_dir}:/roi_outputs          \
+        -B ${roi_outputs}:/roi_outputs      \
         my_img.sif roi                      \
             --input_roi /roi/${roi_name}    \
             -n 10
@@ -37,7 +43,7 @@ The ROI creation:
 
  1. Creates a mirror of your input on the right hemisphere. (Needs update to
         start in the right hemisphere.)
- 1. Generates `n` different `dscalars` for each value of `nrh` between 0 and
+ 1. Generates `n` different `dscalars` for each value of `nrh` between 1 and
         the total size of your ROI. So if you ask for `-n 10` repeats of a
         100-greyordinate ROI,  you will create 100 ROIs.
  2. The `dscalars` are mapped onto `dlabel` files (in `fsLR32k` space: needs
@@ -48,10 +54,10 @@ The ROI creation:
 
 ### ROI tree
 
-      ili_manager.py
-       |- rois_create_mirror.sh
-       |- rois_permute_ROI.R
-       |- rois_dscalar_to_surface.sh
+    ili_manager.py
+        |- rois_create_mirror.sh
+        |- rois_permute_ROI.R
+        |- rois_dscalar_to_surface.sh
 
 ## Running analysis
 
@@ -60,49 +66,38 @@ The analysis works best using _derivatives_ from the DCAN Labs
 
 The analysis flow requires a lot more bind points. From top to bottom:
 
- 1. The session-level directory containing the `dtseries`, `midthickness`, and
-       motion `.mat` file. (TO DO: Use no `.mat` file).
- 2. The ROIs created using the ROI flow above.
- 3. The Matlab runtime. `R2019a` is known to work with this code.
+ 1. The directory containing the `dtseries`, `.mat` file and optionally,
+        `midthickness` files (L/R).
+ 2. The directory containing the ROIs created using the ROI flow above.
+ 3. The Matlab runtime directory. `R2019a` is known to work with this code.
  4. The JSON configuration file for the analysis parameters (see below).
  5. The directory to save the output CSV to. One CSV per session.
 
 The options to the container itself are more self-explanatory.
 
- - The `--session` option requires all four files as arguments.
- - `--roi_dir` takes the path to the ROIs and figures out how many there are.
- - `--n_samples` is how many ROIs to use (e.g. if the ROI is 500 greyordinates,
-       you don't have to use them all). The default value is 100.
- - The path to the Matlab binary (`--matlab`), since I can't package it in the
-       container.
- - The path to the Matlab runtime (`--MRE`).
- - The path to the JSON config file, which should be bound to the container
-       (`--json_config`.)
- - Finally, the `--label` is prepended to the results, e.g.
-       `foobar_results.csv`.
-
-      MRE=${path_to_MRE}/MATLAB_Runtime_R2019a_update9/v96/
-
-      singularity run \
-            -B ${ex_sub}/:/session/            \
-            -B container_rois/:/input_rois/    \
-            -B ${MRE}:/matlab/                 \
-            -B config.json:/config.json        \
-            -B container_output:/output/       \
-            my_img.sif analysis                \
-                  --session                    \
-                        /session/{${dtseries},${lmidthick},${rmidthick},${motion}} \
-                  --roi_dir       /input_rois        \
-                  --n_samples     100                \
-                  --matlab        "$(which matlab)"  \
-                  --MRE           /matlab            \
-                  --json_config   /config.json       \
-                  --label         foobar
+ - The positional arguments are:
+    - `dtseries_file`: The path to the dtseries file .
+    - `motion_file`: The path to the motion `.mat` file.
+ - Required flagged arguments`*`
+    - `--roi_dir` takes the path to the ROIs and figures out how many there
+        are.
+    - The path to the Matlab binary (`--matlab`), since I can't package it in
+        the container.
+    - The path to the Matlab runtime (`--MRE`).
+    - The path to the JSON config file, which should be bound to the container
+        (`--json_config`.)
+ - Other flagged arguments:
+    - `--n_samples` is how many ROIs to use (e.g. if the ROI is 500
+        greyordinates, you don't have to use them all). The default value is
+        100.
+    - Finally, the `--label` is prepended to the results, e.g.
+       `foobar_results.csv`. Default: "crossotope"
 
 ### Config file
 
-To make it the command line options simpler to use, the options to the
-seedmap wrapper are included in a configuration JSON file, e.g.
+All options regarding the processing itself (e.g. motion limits, minute limits)
+are included in a configuration JSON file, see below. This also makes the
+CLI options less overwhelming to navigate.
 
     {
         # Values for seedmap wrapper
@@ -127,8 +122,29 @@ seedmap wrapper are included in a configuration JSON file, e.g.
                                             #   (mm^2)
     }
 
-Default values are those listed in example above. FYI no comments in actual
-JSON files.
+Default values are those listed in example above. NB: You can't include
+comments in actual JSON files.
+
+### Example usage:
+
+    MRE=${path_to_MRE}/MATLAB_Runtime_R2019a_update9/v96/
+
+    singularity run \
+        -B ${ex_sub}/:/session/            \
+        -B container_rois/:/input_rois/    \
+        -B ${MRE}:/matlab/                 \
+        -B config.json:/config.json        \
+        -B container_output:/output/       \
+        my_img.sif analysis                \
+            --roi_dir       /input_rois        \
+            --n_samples     100                \
+            --matlab        "$(which matlab)"  \
+            --MRE           /matlab            \
+            --json_config   /config.json       \
+            --label         foobar             \
+            /session/{${dtseries},${motion}}
+
+See [brace expansion][4] if the `/session/{1,2}` context is unfamiliar.
 
 #### Minutes
 
@@ -143,10 +159,12 @@ Currently, the no-transformation option isn't complete. Keep it set to 1.
 
 ### Analysis tree
 
-      ili_manager.py
-      |- analysis-run_seedmap.sh
+    ili_manager.py
+        |- analysis-run_seedmap.sh
             |- seedmap_wrapper.py
-      |- analysis-cluster.sh
+                |- Cifti_conn_matrix_to_corr_dt_pt
+                |- MATLAB
+        |- analysis-cluster.sh
 
 ## Benchmarks
 
@@ -159,6 +177,30 @@ On [MSI](https://www.msi.umn.edu/)
        With 56 GB RAM: 20 minutes for 100 samples (12 s/ROI or 5 samples per
        minute).
 
+## Running ILI calculation
+
+## Extracting FD 
+
+The motion exclusion results for every framewise displacement (FD) 
+threshold between 0.0 and 0.5 mm (in steps of 0.01 mm)
+are provided in the ABCD HCP pipeline `.mat` files. This makes it easy to extract the amount of 
+data that were used in each analysis post hoc. 
+
+The command below extracts from a single `.mat` file and FD threshold the following values: 
+TR (in seconds), frames remaining, seconds remaining (i.e. TR times frames remaining), and the 
+mean FD of the remaining frames. 
+
+    singularity run crossotope.sif fd [mat file] [fd]
+
+This code should be run on a list of `.mat` files. Future versions will incorporate output of FD
+statistics as part of `analysis`, but hasn't been integrated yet. 
+
+
+
 [1]: https://stackoverflow.com/questions/1030169/pull-latest-changes-for-all-git-submodules
 
 [2]: https://github.com/DCAN-Labs/abcd-hcp-pipeline
+
+[3]: https://git-lfs.com
+
+[4]: https://www.gnu.org/software/bash/manual/html_node/Brace-Expansion.html

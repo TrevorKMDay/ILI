@@ -34,7 +34,12 @@ subparsers = parser.add_subparsers(dest="command")
 
 ps_roi = subparsers.add_parser("roi", help="1. Create ROIs")
 ps_analysis = subparsers.add_parser("analysis", help="2. Analyze session")
-ps_ili = subparsers.add_parser("ili", help="3. Calculate ILI from analysis CSV files")
+ps_ili = subparsers.add_parser("ili",
+                               help="3. Calculate ILI from analysis CSV files")
+ps_fd = subparsers.add_parser("fd", help="Extract FD values from .mat file.")
+ps_version = subparsers.add_parser("version", help="Get the current version")
+
+VERSION = "v0.3.2"
 
 # ROI CREATION OPTIONS ====
 
@@ -122,6 +127,15 @@ ps_ili.add_argument(dest="ili_directory",
 ps_ili.add_argument(dest="ili_output",
                     help="CSV file to save ILI values to.")
 
+# FD options ======
+
+ps_fd.add_argument(dest="mat_file",
+                   help=".mat motion file to extract params from")
+
+ps_fd.add_argument(dest="FD",
+                   default=0.2,
+                   help="FD thresh to use: 0.0 to 0.5 in steps of 0.01")
+
 # SHARED OPTIONS
 
 parser.add_argument("--cwd", dest="cwd",
@@ -131,7 +145,7 @@ parser.add_argument("--cwd", dest="cwd",
 
 args = parser.parse_args()
 
-print(args)
+# print(args)
 
 # If no subcommand given, give help.
 if not args.command:
@@ -164,7 +178,7 @@ if args.command == "analysis":
 
         if args.midthickness is None:
             print("   ERROR: --midthickness must be supplied if smoothing"
-                " kernel is >0.")
+                  " kernel is >0.")
             sys.exit(1)
 
 
@@ -262,7 +276,7 @@ def analyze_session(dtseries_file, motion_file,
         sys.exit("ERROR: First input should be a .dtseries.nii file")
 
     if ".mat" in motion_file:
-        
+
         # Simplify legibility of code
         motion_file = os.path.realpath(motion_file)
         print(f"Motion file is:\n\t{motion_file}")
@@ -270,7 +284,7 @@ def analyze_session(dtseries_file, motion_file,
         sp.run(["Rscript", "{args.cwd}/bin/fd_extraction.R", motion_file,
                 config["fd_threshold"]],
                stdout="/output/data_info.txt")
-        
+
         exit()
 
     elif motion_file == "NONE":
@@ -279,9 +293,7 @@ def analyze_session(dtseries_file, motion_file,
     else:
         sys.exit("ERROR: Second input should be a .mat file or NONE")
 
-
     # Check midthickness files if given
-
     if l_midthick_file is not None and ".surf.gii" in l_midthick_file:
         # Simplify legibility of code
         l_midthick_file = os.path.realpath(l_midthick_file)
@@ -313,7 +325,7 @@ def analyze_session(dtseries_file, motion_file,
 
         if size < n:
             print(f"Requested # of samples ({n}) is smaller than size, "
-                   f"({size}), setting n to {size}.")
+                  f"({size}), setting n to {size}.")
             n = size
 
         indices = len(set([re.findall(r"ix-[0-9]+", f)[0] for f in
@@ -427,20 +439,25 @@ def analyze_session(dtseries_file, motion_file,
 
     return results
 
+
 def calculate_ILI(directory, output_file):
 
-    files = [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]
+    # Find all files in directory
+    files = [f for f in os.listdir(directory)
+             if os.path.isfile(os.path.join(directory, f))]
+
+    # Reduce to CSV files
     csv_files = [os.path.join(directory, f) for f in files if ".csv" in f]
 
     print(f"Found {len(csv_files)} CSV files")
-    
+
     results = []
 
     for i, csv in enumerate(csv_files):
 
         ILI = sp.run(["Rscript", "bin/ili-calculate_ILI.R", csv],
                      stdout=sp.PIPE)
-        
+
         # Clean up file name
         shortname = os.path.basename(csv)
         shortname = str.replace(shortname, ".csv", "")
@@ -458,6 +475,7 @@ def calculate_ILI(directory, output_file):
 
 # Check for wb command existence (only roi or analysis)
 
+
 if args.command == "roi" or args.command == "analysis":
 
     wb_command = shutil.which("wb_command")
@@ -467,9 +485,27 @@ if args.command == "roi" or args.command == "analysis":
     else:
         print(f"wb_command path is:\n\t{wb_command}")
 
+
+def extract_fd(mat_file, fd):
+
+    fd_results = sp.run(["Rscript", f"{args.cwd}/bin/fd_extraction.R",
+                         mat_file, fd],
+                        check=True,
+                        stdout=sp.PIPE, stderr=sp.DEVNULL,
+                        universal_newlines=True)
+
+    fd_results_str = fd_results.stdout.rstrip()
+
+    print(f"{mat_file}, {fd}, {fd_results_str}")
+
 # MAIN EXECUTION ===
 
-if args.command == "roi":
+
+if args.command == "version":
+
+    print(f"Version: {VERSION}")
+
+elif args.command == "roi":
 
     create_rois(args.input_roi, args.n, args.roi_prefix)
 
@@ -491,8 +527,12 @@ elif args.command == "analysis":
     print(results)
 
     np.savetxt(f"/output/{args.label}_results.csv", results, delimiter=",",
-            fmt="%s", header="nrh,ix,L,R")
-    
+               fmt="%s", header="nrh,ix,L,R", comments="")
+
 elif args.command == "ili":
 
     calculate_ILI(args.ili_directory, args.ili_output)
+
+elif args.command == "fd":
+
+    extract_fd(args.mat_file, args.FD)
