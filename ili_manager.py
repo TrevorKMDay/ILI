@@ -472,9 +472,12 @@ def analyze_session(dtseries_file, motion_file,
                        check=False)
 
             seedmap_rc = p.returncode
+
             if seedmap_rc == 100:
-                print("\nERROR: Insufficient minutes at"
-                      f"<{config['fd_threshold']} FD in this dtseries.\n")
+                print()
+                print("Manager: Output from seedmap not created, exiting.")
+                # print("\nERROR: Insufficient minutes at"
+                #       f"<{config['fd_threshold']} FD in this dtseries.\n")
                 sys.exit(100)
 
             print("Copying temp dir to home")

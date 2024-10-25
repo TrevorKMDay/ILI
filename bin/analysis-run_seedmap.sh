@@ -220,7 +220,7 @@ run_and_z () {
     file_created=$(find "${tempdir}" -name "*minutes*_ROI1.dscalar.nii")
 
     if [ "${file_created}" == "" ] ; then
-        echo "Output from seedmap not created, exiting"
+        echo "Output from seedmap not created, exiting, check ${tempdir}"
         exit 100
     fi
 
