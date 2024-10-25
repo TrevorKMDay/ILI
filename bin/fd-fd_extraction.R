@@ -47,7 +47,7 @@ the_dat <- mat$motion.data[[which_df]][[1]]
 TR <- the_dat[[2]][1, 1]
 remaining_frames <- the_dat[[7]][1, 1]
 remaining_seconds <- the_dat[[8]][1, 1]
-remaining_mean_FD <- the_dat[[9]][1, 1]
+remaining_mean_FD <- round(the_dat[[9]][1, 1], 4)
 
 if (is.na(param)) {
 
@@ -56,7 +56,7 @@ if (is.na(param)) {
   # message(paste("Remaining seconds:     ", remaining_seconds))
   # message(paste("FD of remaining frames:", round(remaining_mean_FD, 3)))
 
-  message("TR, frames, seconds, mean FD")
+  cat("TR, frames, seconds, mean FD", fill = TRUE)
   cat(paste(TR, remaining_frames, remaining_seconds, remaining_mean_FD,
             sep = ", "),
       fill = TRUE)
