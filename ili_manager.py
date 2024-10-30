@@ -443,11 +443,9 @@ def analyze_session(dtseries_file, motion_file,
         # TO DO: Keep TemporaryDirectory after exit if requested
         # with tf.TemporaryDirectory(prefix=f"{label}-{nrh_zpad}-") as \
         #         temp_dir_name:
-            
-        with tf.mkstemp(prefix=f"{label}-{nrh_zpad}-", dir=".") as \
-                temp_dir_name:
 
-        # temp_dir_name = temp_dir.name
+        temp_dir = tf.mkdtemp(prefix=f"{label}-{nrh_zpad}-", dir=args.cwd)
+        temp_dir_name = temp_dir
 
         print(f"Working directory is: {temp_dir_name}")
 
@@ -474,18 +472,18 @@ def analyze_session(dtseries_file, motion_file,
                     str(config['z_transform_yn']),
                     temp_dir_name]
         
-        # print(rsm_cmd)
+        # pp.pprint(rsm_cmd)
 
         p = sp.run(rsm_cmd, check=False)
 
-        sp.run(["tree", temp_dir_name])
+        # sp.run(["tree", temp_dir_name])
         # sp.run[["cp", "-r", str(temp_dir_name), "~/crossotope_mapping"]]
 
-        # seedmap_rc = p.returncode
-        # if seedmap_rc == 100:
-        #     print("\nERROR: Insufficient minutes at"
-        #           f"<{config['fd_threshold']} FD in this dtseries.\n")
-        #     sys.exit(100)
+        seedmap_rc = p.returncode
+        if seedmap_rc == 100:
+            print("\nERROR: Output from seedmap not created!\n"
+                  "Possibly too few good frames.")
+            sys.exit(100)
 
         # setting check=True causes python to exit if this command fails
         # useful for dev, but not prod
@@ -510,7 +508,7 @@ def analyze_session(dtseries_file, motion_file,
         results[n, 2] = int(result3[0])
         results[n, 3] = int(result3[1])
 
-        # print([nrh, ix, result3])
+            # print([nrh, ix, result3])
 
         # break
 

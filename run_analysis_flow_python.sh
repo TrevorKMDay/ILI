@@ -2,7 +2,7 @@
 
 # Seedmap wrapper works with MATLAB R2019a for some reason
 module purge
-module load python3 matlab/R2019a workbench/1.4.2
+module load python3 matlab/R2019a workbench/1.5.0
 
 damien_utilities=/home/faird/shared/code/external/utilities
 
@@ -21,14 +21,14 @@ mkdir -p container_output/
 
 START=$(date '+%s')
 
-python3 ili_manager.py  --cwd $(pwd)            \
-	analysis           \
+python3 ili_manager.py  --cwd $(pwd)       \
+	analysis                           \
         --roi_dir       container_rois/    \
         --n_samples     10                 \
         --matlab        "$(which matlab)"  \
         --MRE           ${MRE}             \
         --json_config   config.json        \
-        --label         test_fd            \
+        --label         test_matlab        \
         ${ex_sub}/{${dtseries},${motion}}
 
 END=$(date '+%s')
