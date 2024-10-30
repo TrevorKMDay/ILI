@@ -447,54 +447,58 @@ def analyze_session(dtseries_file, motion_file,
         with tf.mkstemp(prefix=f"{label}-{nrh_zpad}-", dir=".") as \
                 temp_dir_name:
 
-            # temp_dir_name = temp_dir.name
+        # temp_dir_name = temp_dir.name
 
-            print(f"Working directory is: {temp_dir_name}")
+        print(f"Working directory is: {temp_dir_name}")
 
-            # Params
-            #   1: Zero-padded NRH
-            #   2-3: Where to find Matlab
-            #   4-5: L/R ROI files
-            #   6-9: session dtseries, l/r midthickness, motion
-            #   10: FD; 11: smoothing kernel; 12: rm outliers?; 13: minutes;
-            #   12: Z-transformation?
-            # Note: sp.run seems to require all args to be strings
-            p = sp.run([f"{args.cwd}/bin/analysis-run_seedmap.sh",
-                        nrh_zpad,
-                        matlab, mre_dir,
-                        l_roi_file, r_roi_file,
-                        dtseries,
-                        str(l_midthick_file), str(r_midthick_file),
-                        motion_file,
-                        str(config['fd_threshold']),
-                        str(config['smoothing_kernel']),
-                        str(config['remove_outliers_yn']),
-                        str(config['max_minutes']),
-                        str(config['z_transform_yn']),
-                        temp_dir_name],
-                       check=False)
+        # Params
+        #   1: Zero-padded NRH
+        #   2-3: Where to find Matlab
+        #   4-5: L/R ROI files
+        #   6-9: session dtseries, l/r midthickness, motion
+        #   10: FD; 11: smoothing kernel; 12: rm outliers?; 13: minutes;
+        #   12: Z-transformation?
+        # Note: sp.run seems to require all args to be strings
 
-            seedmap_rc = p.returncode
-            if seedmap_rc == 100:
-                print("\nERROR: Insufficient minutes at"
-                      f"<{config['fd_threshold']} FD in this dtseries.\n")
-                sys.exit(100)
+        rsm_cmd = [f"{args.cwd}/bin/analysis-run_seedmap.sh",
+                    nrh_zpad,
+                    matlab, mre_dir,
+                    l_roi_file, r_roi_file,
+                    dtseries,
+                    str(l_midthick_file), str(r_midthick_file),
+                    motion_file,
+                    str(config['fd_threshold']),
+                    str(config['smoothing_kernel']),
+                    str(config['remove_outliers_yn']),
+                    str(config['max_minutes']),
+                    str(config['z_transform_yn']),
+                    temp_dir_name]
+        
+        # print(rsm_cmd)
 
-            print("Copying temp dir to home")
-            sp.run(["ls", temp_dir_name])
+        p = sp.run(rsm_cmd, check=False)
 
-            # setting check=True causes python to exit if this command fails
-            # useful for dev, but not prod
-            cluster = sp.run([f"{args.cwd}/bin/analysis-cluster.sh",
-                              temp_dir_name,
-                              str(config["cluster_value_min"]),
-                              str(config["cluster_surf_area_min"])],
-                             check=False,
-                             stdout=sp.PIPE, stderr=sp.STDOUT,
-                             universal_newlines=True)
+        sp.run(["tree", temp_dir_name])
+        # sp.run[["cp", "-r", str(temp_dir_name), "~/crossotope_mapping"]]
 
-            # Log cluster info
-            print(cluster.stdout)
+        # seedmap_rc = p.returncode
+        # if seedmap_rc == 100:
+        #     print("\nERROR: Insufficient minutes at"
+        #           f"<{config['fd_threshold']} FD in this dtseries.\n")
+        #     sys.exit(100)
+
+        # setting check=True causes python to exit if this command fails
+        # useful for dev, but not prod
+        cluster = sp.run([f"{args.cwd}/bin/analysis-cluster.sh",
+                            temp_dir_name,
+                            str(config["cluster_value_min"]),
+                            str(config["cluster_surf_area_min"])],
+                            check=False,
+                            stdout=sp.PIPE, stderr=sp.STDOUT,
+                            universal_newlines=True)
+
+        # Log cluster info
+        print(cluster.stdout)
 
         result1 = re.findall(r'RESULT: \[\d+ \d+\]', cluster.stdout)[0]
         result2 = result1.replace("RESULT: ", "")
