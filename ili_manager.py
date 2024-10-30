@@ -441,7 +441,10 @@ def analyze_session(dtseries_file, motion_file,
         # - cast to name to pass to bash scripts
 
         # TO DO: Keep TemporaryDirectory after exit if requested
-        with tf.TemporaryDirectory(prefix=f"{label}-{nrh_zpad}-") as \
+        # with tf.TemporaryDirectory(prefix=f"{label}-{nrh_zpad}-") as \
+        #         temp_dir_name:
+            
+        with tf.mkstemp(prefix=f"{label}-{nrh_zpad}-", dir=".") as \
                 temp_dir_name:
 
             # temp_dir_name = temp_dir.name
