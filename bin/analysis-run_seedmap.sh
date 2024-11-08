@@ -24,6 +24,7 @@ minutes=${13}
 z_transform=${14}
 tempdir=${15}
 
+
 # The seedmap wrapper is consistently located in this place relative to this
 #   file.
 seed_map_wrapper=$(dirname "${0}")/../Cifti_conn_matrix_to_corr_dt_pt/seed_map_wrapper.py
@@ -59,7 +60,7 @@ echolog "\t${input_motion_mat}"
 echolog "ROIs:"
 echolog "\tL: ${L_ROI}"
 echolog "\tR: ${R_ROI}"
-echolog "Output directory:\t${tempdir}"
+echolog "Output directory:\t${tempdir}" 
 echolog "MCR cache:\t\t${MCR_CACHE_ROOT}"
 echolog "RH ROI file:\t\t${R_ROI}"
 echolog "LH ROI file:\t\t${L_ROI}"
@@ -70,6 +71,11 @@ echolog "Minimum data minutes:\t${minutes}"
 echolog "Z-transform:\t\t${z_transform}"
 echo    "----------------"
 echo
+
+if [[ "${L_ROI}" == "" ]] ; then 
+    echo "ERROR: L ROI file is missing, exiting!"
+    exit 1
+fi
 
 for i in ${L_ROI} ${R_ROI} ; do
     if [ ! -e "${i}" ] ; then
@@ -133,7 +139,7 @@ readlink -f "${input_Lmidthickness}" > "${lmt_conc}"
 readlink -f "${input_Rmidthickness}" > "${rmt_conc}"
 
 # Copy motion.mat to seedmap directory (it works better this way)
-echo "-${input_motion_mat}-"
+echo -e "\t${input_motion_mat}-"
 if [ "${input_motion_mat}" != "NONE" ] ; then
     local_mat_file="${tempdir}/motion.mat"
     cp "${input_motion_mat}" "${local_mat_file}"

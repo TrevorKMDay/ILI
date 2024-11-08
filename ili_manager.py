@@ -386,6 +386,7 @@ def analyze_session(dtseries_file, motion_file,
             sizes_to_use.sort()
 
         else:
+
             sizes_to_use = list(range(round(size / 2), round(size / 2) + 1))
 
         print(f"Using sizes {sizes_to_use}")
@@ -400,17 +401,17 @@ def analyze_session(dtseries_file, motion_file,
 
         # Zip ratios, indices
         ROIs_to_use_str = zip(sizes_to_use_str, indices_to_use_str)
+
         # Structure (nrh, ix, [L, R])
         # Find these files in the original directory
         files_to_use = [glob.glob(f"{roi_dir}/*_nrh-{nrh}_ix-{ix}_?.label.gii")
                         for nrh, ix in ROIs_to_use_str]
 
+        # Get full path here before doing nonsense with temporary directories
+        files_to_use = [[os.path.realpath(x) for x in y] for y in files_to_use]
+
         # Store numeric values, file destination
         ROIs = zip(range(0, n), sizes_to_use, indices_to_use, files_to_use)
-
-        # print([n, len(sizes_to_use), len(indices_to_use), len(files_to_use),
-        #        len(list(ROIs))])
-        # exit()
 
     else:
         # ROIs need to be supplied for session flow
@@ -427,6 +428,9 @@ def analyze_session(dtseries_file, motion_file,
         elif "_L.label.gii" in files[1]:
             l_roi_file = os.path.realpath(files[1])
             r_roi_file = os.path.realpath(files[0])
+
+        # pp.pprint(files)
+        # pp.pprint([l_roi_file, r_roi_file])
 
         # TO DO: Don't hardcode this width
         nrh_zpad = str(nrh).zfill(3)
@@ -572,7 +576,6 @@ def calculate_ILI(directory, output_file):
 
 # Check for wb command existence (only roi or analysis)
 
-
 if args.command == "roi" or args.command == "analysis":
 
     wb_command = shutil.which("wb_command")
@@ -596,8 +599,8 @@ def extract_fd(mat_file, fd):
     print(f"{mat_file}, FD<{fd}mm")
     print(f"{fd_results_str}")
 
-# MAIN EXECUTION ===
 
+# MAIN EXECUTION ===
 
 if args.command == "version":
 
@@ -624,9 +627,14 @@ elif args.command == "analysis":
                               halfway=args.halfway_only,
                               keep_temp=args.keep_temp_dir)
 
-    print(results)
+    pp.pprint(results)
 
-    np.savetxt(f"/output/{args.label}_results.csv", results, delimiter=",",
+    if args.cwd != "/home":
+        results_f = f"{args.cwd}/{args.label}_results.csv"
+    else:
+        results_f = f"/output/{args.label}_results.csv"
+
+    np.savetxt(results_f, results, delimiter=",",
                fmt="%s", header="nrh,ix,L,R", comments="")
 
 elif args.command == "ili":
