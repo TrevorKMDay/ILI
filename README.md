@@ -245,6 +245,15 @@ statistics as part of `analysis`, but hasn't been integrated yet.
  - Seed map wrapper development: Robert Hermosillo, Greg Conan
  - Testing and development: Maryam Mahmoudi
 
+# Change log
+
+ - **Dec. 2, 2024**: ver. 0.7.0
+    - Many fixes in order to get around MATLAB problems caused by MSI updated
+        to Rocky 8.
+    - As a consequence, the seed map wrapper was writing out one-frame
+        `dtseries` files, which are now being averaged to create a `dscalar`,
+        resulting in a new warning, which can be safely ignored.
+    - Currently tested to be working with `MATLAB R2023b`.
 
 
 [1]: https://stackoverflow.com/questions/1030169/pull-latest-changes-for-all-git-submodules

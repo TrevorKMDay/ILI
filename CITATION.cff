@@ -7,7 +7,7 @@ message: >-
   If you use this software, please cite it using the
   metadata from this file. Paper in review.
 title: "Crossotope mapping"
-version: 0.3.0
+version: 0.7.0
 type: software
 authors:
   - given-names: Trevor Kincaid McAllister
@@ -31,7 +31,7 @@ repository: >-
 abstract: >-
   Code to calculate laterality of resting-state correlations
   from a ROI. Contains code to generate necessary ROI inputs
-  and calculate laterality of resulting seedmaps. 
+  and calculate laterality of resulting seedmaps.
 keywords:
   - fMRI
   - rsfMRI
