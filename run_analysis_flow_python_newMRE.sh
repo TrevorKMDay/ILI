@@ -2,12 +2,17 @@
 
 # Seedmap wrapper works with MATLAB R2019a for some reason
 module purge
-module load python3 matlab/R2019a workbench/1.5.0
+module load python3 matlab/R2019a workbench/1.5.0 gcc/9.2.0
 
 damien_utilities=/home/faird/shared/code/external/utilities
 
 # MATLAB Runtime
 MRE=${damien_utilities}/MATLAB_Runtime_R2019a_update9/v96/
+# MRE=${damien_utilities}/MATLAB_Runtime_R2019a/
+# MRE=${damien_utilities}/MATLAB_Runtime_2020a_Update_7_glnxa64/v98
+# MRE=${damien_utilities}/MATLAB_Runtime_R2021a/v910/
+MRE=$(pwd)/MATLAB_Runtime_R2019a_update9_v96/
+MRE=/common/software/install/manual/matlab/R2023b/
 
 # echo $MRE
 
