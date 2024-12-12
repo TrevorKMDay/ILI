@@ -482,8 +482,8 @@ def analyze_session(dtseries_file, motion_file,
 
         p = sp.run(rsm_cmd, check=False)
 
-        # sp.run(["tree", temp_dir_name])
-        # sp.run[["cp", "-r", str(temp_dir_name), "~/crossotope_mapping"]]
+        sp.run(["ls", f"{temp_dir_name}/"])
+        sp.run(["ls", f"{temp_dir_name}/seedmaps/"])
 
         seedmap_rc = p.returncode
         if seedmap_rc == 100:

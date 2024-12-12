@@ -60,7 +60,7 @@ echolog "\t${input_motion_mat}"
 echolog "ROIs:"
 echolog "\tL: ${L_ROI}"
 echolog "\tR: ${R_ROI}"
-echolog "Output directory:\t${tempdir}" 
+echolog "Output directory:\t${tempdir}"
 echolog "MCR cache:\t\t${MCR_CACHE_ROOT}"
 echolog "RH ROI file:\t\t${R_ROI}"
 echolog "LH ROI file:\t\t${L_ROI}"
@@ -72,7 +72,7 @@ echolog "Z-transform:\t\t${z_transform}"
 echo    "----------------"
 echo
 
-if [[ "${L_ROI}" == "" ]] ; then 
+if [[ "${L_ROI}" == "" ]] ; then
     echo "ERROR: L ROI file is missing, exiting!"
     exit 1
 fi
@@ -223,7 +223,13 @@ run_and_z () {
 
     # Check to see if a file was created with the appropriate name
     #   Include "minutes" to check that
-    file_created=$(find "${tempdir}" -name "*minutes*_ROI1.dscalar.nii")
+
+    echo "Looking for file ..."
+    file_created=$(find "${tempdir}" \
+                    \( -name "*minutes*_ROI1.dscalar.nii" -o \
+                       -name "*_all_frames_at_FD_none_ROI1.dscalar.nii" \) )
+
+    echo "Found: ${file_created}"
 
     if [ "${file_created}" == "" ] ; then
         echo "Output from seedmap not created, exiting, check ${tempdir}"
