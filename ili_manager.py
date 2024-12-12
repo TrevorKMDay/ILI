@@ -91,30 +91,32 @@ ps_analysis.add_argument("--midthickness", nargs=2,
 
 # Other flags
 
+# TO DO: Make this a positional argument
 ps_analysis.add_argument("-r", "--roi_dir", dest="roi_dir",
+                         default="/input_rois/",
                          help="Directory containing label files to use",
-                         metavar="DIR", default="/input_rois/")
+                         metavar="DIR")
 
 # TO DO: Make this a positional argument
 ps_analysis.add_argument("-c", "--json_config", dest="config_file",
+                         default="/config.json",
                          help="JSON file containing configuration for "
                               "seedmapper",
-                         metavar="FILE", default="/config.json")
+                         metavar="FILE")
 
 ps_analysis.add_argument("-l", "--label", dest="label",
                          help="Prefix for output CSV",
                          default="crossotope",
                          metavar="STR")
 
-ps_analysis.add_argument("-n", "--n_samples", dest="n",
-                         type=int, default=100,
+ps_analysis.add_argument("-n", "--n_samples", dest="n", default=100,
+                         type=int,
                          help="How many mixing values to use.",
                          metavar="N")
 
-ps_analysis.add_argument("-m", "--MRE", dest="mre_dir",
+ps_analysis.add_argument("-m", "--MRE", dest="mre_dir", default="/matlab",
                          help="MATLAB runtime directory; R2019a recommended",
-                         metavar="DIR",
-                         required=True)
+                         metavar="DIR")
 
 ps_analysis.add_argument("-M", "--matlab", dest="matlab",
                          help="Path to MATLAB binary.",
@@ -463,19 +465,19 @@ def analyze_session(dtseries_file, motion_file,
         # Note: sp.run seems to require all args to be strings
 
         rsm_cmd = [f"{args.cwd}/bin/analysis-run_seedmap.sh",
-                    nrh_zpad,
-                    matlab, mre_dir,
-                    l_roi_file, r_roi_file,
-                    dtseries,
-                    str(l_midthick_file), str(r_midthick_file),
-                    motion_file,
-                    str(config['fd_threshold']),
-                    str(config['smoothing_kernel']),
-                    str(config['remove_outliers_yn']),
-                    str(config['max_minutes']),
-                    str(config['z_transform_yn']),
-                    temp_dir_name]
-        
+                   nrh_zpad,
+                   matlab, mre_dir,
+                   l_roi_file, r_roi_file,
+                   dtseries,
+                   str(l_midthick_file), str(r_midthick_file),
+                   motion_file,
+                   str(config['fd_threshold']),
+                   str(config['smoothing_kernel']),
+                   str(config['remove_outliers_yn']),
+                   str(config['max_minutes']),
+                   str(config['z_transform_yn']),
+                   temp_dir_name]
+
         # pp.pprint(rsm_cmd)
 
         p = sp.run(rsm_cmd, check=False)
@@ -492,12 +494,12 @@ def analyze_session(dtseries_file, motion_file,
         # setting check=True causes python to exit if this command fails
         # useful for dev, but not prod
         cluster = sp.run([f"{args.cwd}/bin/analysis-cluster.sh",
-                            temp_dir_name,
-                            str(config["cluster_value_min"]),
-                            str(config["cluster_surf_area_min"])],
-                            check=False,
-                            stdout=sp.PIPE, stderr=sp.STDOUT,
-                            universal_newlines=True)
+                          temp_dir_name,
+                          str(config["cluster_value_min"]),
+                          str(config["cluster_surf_area_min"])],
+                         check=False,
+                         stdout=sp.PIPE, stderr=sp.STDOUT,
+                         universal_newlines=True)
 
         # Log cluster info
         print(cluster.stdout)
@@ -512,7 +514,7 @@ def analyze_session(dtseries_file, motion_file,
         results[n, 2] = int(result3[0])
         results[n, 3] = int(result3[1])
 
-            # print([nrh, ix, result3])
+        # print([nrh, ix, result3])
 
         # break
 
@@ -575,6 +577,7 @@ def calculate_ILI(directory, output_file):
 # RUN
 
 # Check for wb command existence (only roi or analysis)
+
 
 if args.command == "roi" or args.command == "analysis":
 
