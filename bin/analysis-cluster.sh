@@ -2,14 +2,20 @@
 
 set -e
 
+echolog(){
+    # file=${tempdir}/info.txt
+    # touch ${file}
+    echo -e "(${1} cluster): ${2}" # | tee -a "${file}"
+}
+
 input_dir=${1}
 SURF_VAL_THRESH=${2}
 SURF_AREA_THRESH=${3}
 
 echo
-echo "STARTING CLUSTER SCRIPT"
-echo "Value threshold: ${SURF_VAL_THRESH}"
-echo "SA threshold:    ${SURF_AREA_THRESH}"
+echolog INFO "STARTING CLUSTER SCRIPT"
+echolog INFO "Value threshold: ${SURF_VAL_THRESH}"
+echolog INFO "SA threshold:    ${SURF_AREA_THRESH}"
 
 # Surfaces for refernce
 ex_surf=$(dirname "${0}")/../data/example_sub/sub-example_hemi
@@ -18,12 +24,12 @@ ex_surf=$(dirname "${0}")/../data/example_sub/sub-example_hemi
 file=$(find "${input_dir}/" -name "*_roi-1_Z.dscalar.nii")
 
 if [ "${file}" == "" ] ; then
-    echo "ERROR: Can't find Z transformed dscalar in ${input_dir}/"
-    echo "  Pattern: *_roi-1_Z.dscalar.nii"
-    echo "${file}"
+    echolog ERROR "Can't find Z transformed dscalar in ${input_dir}/"
+    echolog ERROR "  Pattern: *_roi-1_Z.dscalar.nii"
+    echolog ERROR "${file}"
     exit 11
 else
-    echo "Found file ${file}"
+    echolog INFO "Found file ${file}"
 fi
 
 suffix=v${SURF_VAL_THRESH}_sa${SURF_AREA_THRESH}
@@ -68,4 +74,4 @@ nL=$(wb_command -metric-stats "${cluster_dir}/cortex_left_${suffix}.func.gii" \
 nR=$(wb_command -metric-stats "${cluster_dir}/cortex_right_${suffix}.func.gii" \
         -reduce COUNT_NONZERO)
 
-echo "RESULT: [${nL} ${nR}]"
+echolog INFO "RESULT: [${nL} ${nR}]"

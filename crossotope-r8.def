@@ -4,7 +4,7 @@ From: rockylinux:8
 
 %labels
     AUTHOR day00096@umn.edu
-    VERSION v0.7.1
+    VERSION v0.7.2
 
 %files
     ./ili_manager.py                    /home

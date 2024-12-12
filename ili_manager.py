@@ -12,7 +12,7 @@ import json
 import numpy as np
 import pandas as pd
 import pprint
-import tempfile as tf
+# import tempfile as tf
 
 # Newlines in help
 from argparse import RawTextHelpFormatter
@@ -41,7 +41,7 @@ ps_fd = subparsers.add_parser("fd", help="Extract FD values from .mat file.")
 ps_config = subparsers.add_parser("config", help="Create basic config file.")
 ps_version = subparsers.add_parser("version", help="Get the current version")
 
-VERSION = "v0.7.0"
+VERSION = "v0.7.2"
 
 # ROI CREATION OPTIONS ====
 
@@ -105,16 +105,18 @@ ps_analysis.add_argument("-c", "--json_config", dest="config_file",
                          metavar="FILE")
 
 ps_analysis.add_argument("-l", "--label", dest="label",
-                         help="Prefix for output CSV",
                          default="crossotope",
+                         help="Prefix for output CSV",
                          metavar="STR")
 
-ps_analysis.add_argument("-n", "--n_samples", dest="n", default=100,
+ps_analysis.add_argument("-n", "--n_samples", dest="n",
+                         default=100,
                          type=int,
                          help="How many mixing values to use.",
                          metavar="N")
 
-ps_analysis.add_argument("-m", "--MRE", dest="mre_dir", default="/matlab",
+ps_analysis.add_argument("-m", "--MRE", dest="mre_dir",
+                         default="/matlab",
                          help="MATLAB runtime directory; R2019a recommended",
                          metavar="DIR")
 
@@ -124,9 +126,6 @@ ps_analysis.add_argument("-M", "--matlab", dest="matlab",
                          required=True)
 
 ps_analysis.add_argument("--halfway_only", dest="halfway_only",
-                         action="store_true")
-
-ps_analysis.add_argument("--keep_temp_dir", dest="keep_temp_dir",
                          action="store_true")
 
 # ILI options =======
@@ -284,7 +283,7 @@ def create_rois(input_roi, n, prefix):
 def analyze_session(dtseries_file, motion_file,
                     roi_dir, n, config, matlab, mre_dir,
                     l_midthick_file=None, r_midthick_file=None,
-                    halfway=False, keep_temp=False):
+                    halfway=False):
 
     """
     Given a session, create the table of LI per seed laterality
@@ -306,7 +305,16 @@ def analyze_session(dtseries_file, motion_file,
 
     print("\n=== Running analysis flow ... ===")
 
+    os.chdir("/tmp/")
+    os.close(os.open("file.txt", os.O_CREAT))
+
+    if os.path.exists("file.txt"):
+        print("INFO: Temp file system working.")
+        os.remove("file.txt")
+
     # TO DO: Check matlab is properly executable
+
+    label = args.label
 
     # Check input files
     # os.path.realpath resolves relative paths, symlinks the user gives it
@@ -314,7 +322,7 @@ def analyze_session(dtseries_file, motion_file,
     if ".dtseries.nii" in dtseries_file:
         # Simplify legibility of code
         dtseries = os.path.realpath(dtseries_file)
-        print(f"dtseries is:\n\t{dtseries_file}")
+        print(f"INFO: dtseries is:\n\t{dtseries_file}")
     else:
         sys.exit("ERROR: First input should be a .dtseries.nii file")
 
@@ -322,7 +330,7 @@ def analyze_session(dtseries_file, motion_file,
 
         # Simplify legibility of code
         motion_file = os.path.realpath(motion_file)
-        print(f"Motion file is:\n\t{motion_file}")
+        print(f"INFO: Motion file is:\n\t{motion_file}")
 
         # sp.run(["Rscript", "{args.cwd}/bin/fd_extraction.R", motion_file,
         #         config["fd_threshold"]],
@@ -332,7 +340,7 @@ def analyze_session(dtseries_file, motion_file,
 
     elif motion_file == "NONE":
         motion_file = "NONE"
-        print(f"Motion file is:\n\t{motion_file}")
+        print(f"INFO: Motion file is:\n\t{motion_file}")
     else:
         sys.exit("ERROR: Second input should be a .mat file or NONE")
 
@@ -436,24 +444,14 @@ def analyze_session(dtseries_file, motion_file,
 
         # TO DO: Don't hardcode this width
         nrh_zpad = str(nrh).zfill(3)
-        label = args.label
 
         # Matlab function ciftiopen() seems to want to run "-cifti-convert
         #   -to-gifti-ext" writing the output to the working directory (/home).
         # This doesn't work in a container, so chdir to the filesystem /tmp
-        os.chdir("/tmp/")
-
-        # tf.TemporaryDirectory() creates the dir, but returns an object
-        # - cast to name to pass to bash scripts
-
-        # TO DO: Keep TemporaryDirectory after exit if requested
-        # with tf.TemporaryDirectory(prefix=f"{label}-{nrh_zpad}-") as \
-        #         temp_dir_name:
-
-        temp_dir = tf.mkdtemp(prefix=f"{label}-{nrh_zpad}-", dir=args.cwd)
-        temp_dir_name = temp_dir
+        temp_dir_name = f"/tmp/{label}_{nrh_zpad}"
 
         print(f"Working directory is: {temp_dir_name}")
+        os.makedirs(temp_dir_name)
 
         # Params
         #   1: Zero-padded NRH
@@ -627,8 +625,7 @@ elif args.command == "analysis":
                               config, args.matlab, args.mre_dir,
                               l_midthick_file=l_midthick_file,
                               r_midthick_file=r_midthick_file,
-                              halfway=args.halfway_only,
-                              keep_temp=args.keep_temp_dir)
+                              halfway=args.halfway_only)
 
     pp.pprint(results)
 

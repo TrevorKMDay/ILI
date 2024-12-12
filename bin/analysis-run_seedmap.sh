@@ -32,54 +32,47 @@ seed_map_wrapper=$(dirname "${0}")/../Cifti_conn_matrix_to_corr_dt_pt/seed_map_w
 # Export cache root: This probably doesn't need to be done in a container, but
 # I know it works
 matlab_dir=$(dirname "${matlab}")
-export PATH=${matlab_dir}:${PATH}
 MCR_CACHE_ROOT=$(mktemp -d /tmp/mcr.XXXXXX)
+
+export PATH=${matlab_dir}:${PATH}
 export MCR_CACHE_ROOT
 
 # Run seedmap
 
-# Work in /tmp to make container work
-# tempdir=/tmp/${label}_seedmap_dir_${nrh}
-# Create output directory and exit if unsuccessful
-# mkdir -p "${tempdir}" || (echo "Unable to create tempdir ${tempdir}" &&
-#   exit 1)
-
 echolog(){
     file=${tempdir}/info.txt
     # touch ${file}
-    echo -e "${1}" | tee -a "${file}"
+    echo -e "(${1} run_seedmap): ${2}" | tee -a "${file}"
 }
 
 echo
-echo    "----------------"
-echolog "Input:"
-echolog "\t${input_dtseries}"
-echolog "\t${input_Lmidthickness}"
-echolog "\t${input_Rmidthickness}"
-echolog "\t${input_motion_mat}"
-echolog "ROIs:"
-echolog "\tL: ${L_ROI}"
-echolog "\tR: ${R_ROI}"
-echolog "Output directory:\t${tempdir}"
-echolog "MCR cache:\t\t${MCR_CACHE_ROOT}"
-echolog "RH ROI file:\t\t${R_ROI}"
-echolog "LH ROI file:\t\t${L_ROI}"
-echolog "FD threshold:\t\t${FD}"
-echolog "Smoothing kernel:\t${SK}"
-echolog "Outlier removal:\t${rm_OUTLIER}"
-echolog "Minimum data minutes:\t${minutes}"
-echolog "Z-transform:\t\t${z_transform}"
-echo    "----------------"
+echolog INFO "Input:"
+echolog INFO "\t${input_dtseries}"
+echolog INFO "\t${input_Lmidthickness}"
+echolog INFO "\t${input_Rmidthickness}"
+echolog INFO "\t${input_motion_mat}"
+echolog INFO "ROIs:"
+echolog INFO "\tL: ${L_ROI}"
+echolog INFO "\tR: ${R_ROI}"
+echolog INFO "Output directory:\t${tempdir}"
+echolog INFO "MCR cache:\t\t${MCR_CACHE_ROOT}"
+echolog INFO "RH ROI file:\t\t${R_ROI}"
+echolog INFO "LH ROI file:\t\t${L_ROI}"
+echolog INFO "FD threshold:\t\t${FD}"
+echolog INFO "Smoothing kernel:\t${SK}"
+echolog INFO "Outlier removal:\t${rm_OUTLIER}"
+echolog INFO "Minimum data minutes:\t${minutes}"
+echolog INFO "Z-transform:\t\t${z_transform}"
 echo
 
 if [[ "${L_ROI}" == "" ]] ; then
-    echo "ERROR: L ROI file is missing, exiting!"
+    echolog ERROR "L ROI file is missing, exiting!"
     exit 1
 fi
 
 for i in ${L_ROI} ${R_ROI} ; do
     if [ ! -e "${i}" ] ; then
-        echo "ERROR: ROI file \"${i}\" doesn't exist, exiting."
+        echolog ERROR "ROI file \"${i}\" doesn't exist, exiting."
         exit 1
     fi
 done
@@ -87,9 +80,9 @@ done
 # Check dtseries exists
 if [ -e "${input_dtseries}" ] ; then
     TR=$(wb_command -file-information -only-step-interval "${input_dtseries}")
-    echo -e "Found TR: ${TR} s\n"
+    echolog INFO "Found TR: ${TR} s\n"
 else
-    echo "MISSING dtseries: ${input_dtseries}"
+    echolog ERROR "MISSING dtseries: ${input_dtseries}"
     exit 1
 fi
 
@@ -101,14 +94,10 @@ ptseriesfile=${tempdir}/session.ptseries.nii
 
 # Apply labels
 wb_command -cifti-create-dense-from-template \
-    "${input_dtseries}" \
-    "${labelfile}"      \
-    -label              \
-        CORTEX_LEFT     \
-        "${L_ROI}"      \
-    -label              \
-        CORTEX_RIGHT    \
-        "${R_ROI}"
+    "${input_dtseries}"             \
+    "${labelfile}"                  \
+    -label CORTEX_LEFT  "${L_ROI}"  \
+    -label CORTEX_RIGHT "${R_ROI}"
 
 # Create ptseries
 wb_command -cifti-parcellate    \
@@ -119,9 +108,8 @@ wb_command -cifti-parcellate    \
     -method MEAN                \
     -legacy-mode
 
-echo    "Done with:"
-echo -e "\t${labelfile}"
-echo -e "\t${ptseriesfile}"
+echolog INFO "Done with: ${labelfile}"
+echolog INFO "Done with: ${ptseriesfile}"
 
 ################################################################################
 # Create conc files
@@ -139,7 +127,7 @@ readlink -f "${input_Lmidthickness}" > "${lmt_conc}"
 readlink -f "${input_Rmidthickness}" > "${rmt_conc}"
 
 # Copy motion.mat to seedmap directory (it works better this way)
-echo -e "\t${input_motion_mat}-"
+# echo -e "\t${input_motion_mat}"
 if [ "${input_motion_mat}" != "NONE" ] ; then
     local_mat_file="${tempdir}/motion.mat"
     cp "${input_motion_mat}" "${local_mat_file}"
@@ -149,29 +137,28 @@ else
     MOTION_FLAG=""
 fi
 
-# exit
+# Check all files exist
 
-################################################################################
-# Run
+for i in ${lmt_conc} ${rmt_conc} ${dtseries_conc} ${ptseries_conc} ; do
+    if [ ! -e "${i}" ] ; then
+        echolog ERROR "Important file (${i}) doesn't exist"
+        exit 1
+    fi
+done
+
+# RUN SEEDMAP ##################################################################
+
+wb_command=$(which wb_command)
 
 echo
-echo "Seed mapping"
-echo "------------"
-wb_command=$(which wb_command)
-echo -e "WB:\t${wb_command}"
-echo -e "MRE:\t${mre}"
-echo "Seed map wrapper: ${seed_map_wrapper}"
+echolog INFO "Seed mapping"
+echolog INFO "WB:\t${wb_command}"
+echolog INFO "MRE:\t${mre}"
+echolog INFO "Seed map wrapper: ${seed_map_wrapper}"
 echo
 
 output=${tempdir}/seedmaps
 mkdir -p "${output}"
-
-for i in ${lmt_conc} ${rmt_conc} ${dtseries_conc} ${ptseries_conc} ; do
-    if [ ! -e "${i}" ] ; then
-        echo "Important file (${i}) doesn't exist"
-        exit 1
-    fi
-done
 
 # For flags where 0 means don't do, add that here:
 
@@ -224,15 +211,16 @@ run_and_z () {
     # Check to see if a file was created with the appropriate name
     #   Include "minutes" to check that
 
-    echo "Looking for file ..."
+    echolog INFO "Looking for file ..."
     file_created=$(find "${tempdir}" \
                     \( -name "*minutes*_ROI1.dscalar.nii" -o \
                        -name "*_all_frames_at_FD_none_ROI1.dscalar.nii" \) )
 
-    echo "Found: ${file_created}"
+    echolog INFO "Found: ${file_created}"
 
     if [ "${file_created}" == "" ] ; then
-        echo "Output from seedmap not created, exiting, check ${tempdir}"
+        echolog ERROR \
+            "Output from seedmap not created, exiting, check ${tempdir}"
         exit 100
     fi
 
@@ -241,7 +229,7 @@ run_and_z () {
     new_file_bn="$(basename "${file_created}" | sed 's/_ROI/_roi-/')"
     new_file="${tempdir}/${new_file_bn}"
     mv "${file_created}" "${new_file}"
-    echo "Created: ${new_file}"
+    echolog INFO "Created ${new_file}"
     echo
 
     if [ "${z_transform}" == 1 ] ; then
@@ -260,7 +248,7 @@ run_and_z () {
 
         fi
 
-        echo "Created ${z_dscalar}"
+        echo INFO "Created ${z_dscalar}"
 
     fi
 

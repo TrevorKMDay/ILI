@@ -14,4 +14,4 @@ results.csv
 
 # This is for local use only
 old_containers/
-Cifti_conn_matrix_to_corr_pt_dt/**
+Cifti_conn_matrix_to_corr_pt_dt/

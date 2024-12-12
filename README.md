@@ -76,9 +76,9 @@ The analysis works best using _derivatives_ from the DCAN Labs
 The analysis flow requires a lot more bind points. From top to bottom:
 
  1. The session-level directory containing the `dtseries`, and
-       motion `.mat` file. (TO DO: Use no `.mat` file).
+       motion `.mat` file.
  2. The ROIs created using the ROI flow above.
- 3. The Matlab runtime. `R2019a` is known to work with this code.
+ 3. The Matlab runtime. `R2023b` is known to work with this code.
  4. The JSON configuration file for the analysis parameters (see below).
  5. The directory to save the output CSV to. One CSV per session.
 
@@ -86,23 +86,33 @@ Additionally, the `midthickness` files must be including if smoothing is
 enabled.
 
 The options to the container itself are more self-explanatory.
+If you bind the directory to its default value (i.e. binding the Matlab
+as such `${MRE}:/matlab` or `example_config.json:/config.json`), you do not
+need to set the associated parameter.
 
  - The positional arguments are the input `dtseries` file and its associated
-    motion `.mat` file.
+        motion `.mat` file.
+    - If you do not wish to perform censoring, pass the string "NONE." **As of
+        Dec. 12, 2024, passing NONE doesn't seem to be working.**
  - `--roi_dir` takes the path to the ROIs and figures out how many there are.
+    - Default: `/input_rois/`
  - `--n_samples` is how many ROIs to use (e.g. if the ROI is 500 greyordinates,
-       you don't have to use them all). The default value is 100.
+        you don't have to use them all).
+    - Default: 100.
  - The path to the Matlab binary (`--matlab`), since I can't package it in the
-       container.
+        container.
  - The path to the Matlab runtime (`--MRE`).
+    - Default: `/matlab/`
  - The path to the JSON config file, which should be bound to the container
-       (`--json_config`).
- - Finally, the `--label` is prepended to the results, e.g.
-       `foobar_results.csv`.
+        (`--json_config`).
+    - Default: `/config.json`
+ - Finally, the `--label` is prepended to the results,
+        e.g. `label_results.csv`.
+    - Default: "crossotope"
 
 Example code:
 
-    MRE=${path_to_MRE}/MATLAB_Runtime_R2019a_update9/v96/
+    MRE=/common/software/install/manual/matlab/R2023b/
 
     singularity run \
         -B ${ex_sub}/:/session/            \
@@ -111,11 +121,8 @@ Example code:
         -B config.json:/config.json        \
         -B container_output:/output/       \
         my_img.sif analysis                \
-            --roi_dir       /input_rois         \
             --n_samples     100                 \
             --matlab        "$(which matlab)"   \
-            --MRE           /matlab             \
-            --json_config   /config.json        \
             --label         foobar              \
             /session/${dtseries}                \
             /session/${motion}
@@ -151,26 +158,6 @@ CLI options less overwhelming to navigate.
 
 Default values are those listed in example above. NB: You can't include
 comments in actual JSON files.
-
-### Example usage:
-
-    MRE=${path_to_MRE}/MATLAB_Runtime_R2019a_update9/v96/
-
-    singularity run \
-        -B ${ex_sub}/:/session/            \
-        -B container_rois/:/input_rois/    \
-        -B ${MRE}:/matlab/                 \
-        -B config.json:/config.json        \
-        -B container_output:/output/       \
-        my_img.sif analysis                \
-            --roi_dir       /input_rois         \
-            --n_samples     100                 \
-            --matlab        "$(which matlab)"   \
-            --MRE           /matlab             \
-            --json_config   /config.json        \
-            --label         foobar              \
-            /session/${dtseries}                \
-            /session/${motion}
 
 #### Minutes
 
@@ -231,21 +218,28 @@ threshold between 0.0 and 0.5 mm (in steps of 0.01 mm)
 are provided in the ABCD HCP pipeline `.mat` files. This makes it easy to
 extract the amount of data that were used in each analysis post hoc.
 
-The command below extracts from a single `.mat` file and FD threshold the following values:
-TR (in seconds), frames remaining, seconds remaining (i.e. TR times frames remaining), and the
+The command below extracts from a single `.mat` file and FD threshold the
+following values: TR (in seconds), frames remaining,
+seconds remaining (i.e. TR times frames remaining), and the
 mean FD of the remaining frames.
 
     singularity run crossotope.sif fd [mat file] [fd]
 
-This code should be run on a list of `.mat` files. Future versions will incorporate output of FD
-statistics as part of `analysis`, but hasn't been integrated yet.
+This code should be run on a list of `.mat` files. Future versions will
+incorporate output of FD statistics as part of `analysis`, but hasn't been
+integrated yet.
 
 ## Acknowledgements
 
- - Seed map wrapper development: Robert Hermosillo, Greg Conan
- - Testing and development: Maryam Mahmoudi
+ - Seed map wrapper development: Robert Hermosillo, PhD; Greg Conan
+ - Testing and development: Eric Feczko, PhD; Maryam Mahmoudi, PhD
 
 # Change log
+
+ - **Dec. 12, 2024**: ver. 0.7.2
+    - Fixed issue with opening temporary directories.
+    - Added information to print statements to help locate issues (not
+        complete).
 
  - **Dec. 2, 2024**: ver. 0.7.0
     - Many fixes in order to get around MATLAB problems caused by MSI updated
