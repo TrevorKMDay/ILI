@@ -33,13 +33,22 @@ parser = argparse.ArgumentParser(
 
 subparsers = parser.add_subparsers(dest="command")
 
-ps_roi = subparsers.add_parser("roi", help="1. Create ROIs")
-ps_analysis = subparsers.add_parser("analysis", help="2. Analyze session")
+ps_roi = subparsers.add_parser("roi",
+                               help="1. Create ROIs")
+
+ps_analysis = subparsers.add_parser("analysis",
+                                    help="2. Analyze session")
 ps_ili = subparsers.add_parser("ili",
                                help="3. Calculate ILI from analysis CSV files")
-ps_fd = subparsers.add_parser("fd", help="Extract FD values from .mat file.")
-ps_config = subparsers.add_parser("config", help="Create basic config file.")
-ps_version = subparsers.add_parser("version", help="Get the current version")
+
+ps_fd = subparsers.add_parser("fd",
+                              help="Extract FD values from .mat file.")
+
+ps_config = subparsers.add_parser("config",
+                                  help="Create basic config file.")
+
+ps_version = subparsers.add_parser("version",
+                                   help="Get the current version")
 
 VERSION = "v0.7.2"
 
@@ -54,9 +63,10 @@ ps_roi.add_argument("-i", "--input_roi", dest="input_roi",
 
 # How many variations at each L/R greyordinate ratio to create
 ps_roi.add_argument("-n", "--n_repeats", dest="n",
-                    type=int, default=10,
+                    default=10,
+                    type=int,
                     help="How many alternative versions at each mixing "
-                         "ratio L/R to create.",
+                         "ratio L/R to create. Default: 10.",
                     metavar="N")
 
 ps_roi.add_argument("-p", "--prefix", dest="roi_prefix",
@@ -78,16 +88,6 @@ ps_analysis.add_argument(dest="motion_file",
 ps_analysis.add_argument("--midthickness", nargs=2,
                          metavar="FILE",
                          help="Midthickness files for smoothing: L, R")
-
-# ps_analysis.add_argument("-L", "--left_midthickness",
-#                          dest="left_midthick_file",
-#                          help="Left midthickness file",
-#                          metavar="FILE")
-
-# ps_analysis.add_argument("-R", "--right_midthickness",
-#                          dest="right_midthick_file",
-#                          help="Right midthickness file",
-#                          metavar="FILE")
 
 # Other flags
 
