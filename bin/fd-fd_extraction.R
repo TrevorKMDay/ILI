@@ -44,10 +44,22 @@ if (FD < 0){
 which_df <- match(FD, steps)
 the_dat <- mat$motion.data[[which_df]][[1]]
 
-TR <- the_dat[[2]][1, 1]
-remaining_frames <- the_dat[[7]][1, 1]
-remaining_seconds <- the_dat[[8]][1, 1]
-remaining_mean_FD <- round(the_dat[[9]][1, 1], 4)
+names <- dimnames(the_dat)[[1]]
+
+if ("epi.TR" %in% names) {
+  tr <- which(names == "epi.TR")
+  TR <- the_dat[[2]][1, 1]
+} else {
+  TR <- NA
+}
+
+r_f <- which(names == "remaining.frame.count")
+r_s <- which(names == "remaining.seconds")
+r_mfd <- which(names == "remaining.frame.mean.FD")
+
+remaining_frames <- the_dat[[r_f]][1, 1]
+remaining_seconds <- the_dat[[r_s]][1, 1]
+remaining_mean_FD <- round(the_dat[[r_mfd]][1, 1], 4)
 
 if (is.na(param)) {
 
