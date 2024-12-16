@@ -47,10 +47,24 @@ ILI_from_txt <- function(frame, size = NA) {
 
 # Load data
 
-frame <- read.csv(the_file)
-frame$LI <-(frame$L - frame$R) / (frame$L + frame$R)
+first_line <- readLines(the_file, n=1)
+# cat(first_line)
 
-# Estimate, guessing at size from data
-ili1 <- ILI_from_txt(frame, size)
+if (grepl("^ERROR: Insufficient minutes", first_line)) {
 
-cat(ili1, fill = TRUE)
+  # Unable to estimate ILI, report number of seconds in file
+  seconds <- as.numeric(sub("^.* ", "", first_line))
+  ili1 <- NA
+
+} else {
+
+  frame <- read.csv(the_file)
+  frame$LI <-(frame$L - frame$R) / (frame$L + frame$R)
+
+  # Estimate, guessing at size from data
+  ili1 <- ILI_from_txt(frame, size)
+  seconds <- NA
+
+}
+
+cat(paste0(ili1, ",", seconds), fill = TRUE)

@@ -2,6 +2,7 @@ import os
 import re
 import subprocess as sp
 import pandas as pd
+import pprint as pp
 
 
 def write_csv(df, csv_file):
@@ -13,6 +14,9 @@ def write_csv(df, csv_file):
 
 
 def calculate_ILI(directory, output_file, sizes=None):
+
+    # TO DO: Don't overwrite existing files
+    # TO DO: .csv addition isn't working
 
     # Find all files in directory
     files = [f for f in os.listdir(directory)
@@ -43,28 +47,33 @@ def calculate_ILI(directory, output_file, sizes=None):
 
         if sizes is not None and roi_name in sizes.keys():
             size = sizes[roi_name]
-            ILI = sp.run(["Rscript", "bin/ili-calculate_ILI.R", csv,
-                          str(size)],
-                         stdout=sp.PIPE)
+            result = sp.run(["Rscript", "bin/ili-calculate_ILI.R", csv,
+                             str(size)],
+                            stdout=sp.PIPE)
         else:
             # If roi_name not found in json file, fall back
             print(f"Size for roi {roi_name} was not found, falling back to "
                   "automatic detection.")
-            ILI = sp.run(["Rscript", "bin/ili-calculate_ILI.R", csv],
-                         stdout=sp.PIPE)
+
+            result = sp.run(["Rscript", "bin/ili-calculate_ILI.R", csv],
+                            stdout=sp.PIPE)
+
+        result_clean = result.stdout.decode('utf-8').replace("\n", "")
+        ili, sec = [x for x in result_clean.split(",")]
 
         # Clean up file name
         shortname = str.replace(os.path.basename(csv), ".csv", "")
+        print(shortname)
 
         # Build up dataframe
-        results.append([shortname, float(ILI.stdout)])
+        results.append([shortname, ili, sec])
 
     df = pd.DataFrame(results)
-    df.columns = ["file", "ILI"]
+    df.columns = ["file", "ILI", "seconds"]
 
     # Append .csv to output file if not supplied
     output_file = f"{output_file}.csv" \
-                  if re.search(".csv", output_file) is not None \
+                  if re.search(".csv", output_file) is None \
                   else output_file
 
     # My custom CSV wrapper

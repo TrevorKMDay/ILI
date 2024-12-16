@@ -4,10 +4,10 @@ From: rockylinux:8
 
 %labels
     AUTHOR day00096@umn.edu
-    VERSION v0.7.3
+    VERSION v0.8.0
 
 %files
-    ./ili_manager.py                    /home
+    ./ili_*.py                          /home
     ./bin                               /home
     # Workbench 1.4.2 copy
     ./workbench                         /home

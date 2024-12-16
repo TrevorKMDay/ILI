@@ -53,7 +53,7 @@ ps_config = subparsers.add_parser("config",
 ps_version = subparsers.add_parser("version",
                                    help="Get the current version")
 
-VERSION = "v0.7.3"
+VERSION = "v0.8.0"
 
 # ROI CREATION OPTIONS ====
 
