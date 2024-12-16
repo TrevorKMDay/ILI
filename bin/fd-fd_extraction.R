@@ -76,13 +76,13 @@ if (is.na(param)) {
 } else {
 
   if (param %in% c(1, "TR")) {
-    message(TR)
+    cat(TR, fill = TRUE)
   } else if (param %in% c(2, "frames")) {
-    message(remaining_frames)
+    cat(remaining_frames, fill = TRUE)
   } else if (param %in% c(3, "sec")) {
-    message(remaining_seconds)
+    cat(remaining_seconds, fill = TRUE)
   } else if (param %in% c(4, "FD")) {
-    message(round(remaining_mean_FD, 2))
+    cat(round(remaining_mean_FD, 2), fill = TRUE)
   } else {
     stop("Unrecognized parameter")
   }

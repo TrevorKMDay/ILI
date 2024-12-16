@@ -4,7 +4,7 @@ From: rockylinux:8
 
 %labels
     AUTHOR day00096@umn.edu
-    VERSION v0.7.2
+    VERSION v0.7.3
 
 %files
     ./ili_manager.py                    /home
@@ -62,7 +62,9 @@ From: rockylinux:8
 
     # Install required R packages
     repo="https://cloud.r-project.org/"
-    R -e "install.packages(c(\"RNifti\", \"ciftiTools\"), repo=\"${repo}\")"
+
+    R -e "install.packages(c(\"RNifti\", \"ciftiTools\", \"R.matlab\"), \
+                           repo=\"${repo}\")"
 
     # Fix permissions on workbench
     chmod -R o+rX /home/
